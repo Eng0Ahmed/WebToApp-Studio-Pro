@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebToApp Studio Pro</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ==========================================
+       TOP APP BAR
+       ========================================== -->
+  <header class="app-header">
+    <div class="brand-section">
+      <span class="brand-logo-icon">📱</span>
+      <div class="brand-titles">
+        <h1 data-i18n="appTitle">WebToApp Studio Pro</h1>
+        <p data-i18n="appSubtitle">تحويل المواقع ومشاريع HTML إلى تطبيقات أندرويد (APK & AAB)</p>
+      </div>
+    </div>
+
+    <!-- System SDK Status Indicators -->
+    <div class="system-status-pills">
+      <div id="sdkPill" class="status-pill ready">
+        <span class="status-dot"></span>
+        <span id="sdkPillText" data-i18n="sdkReady">Android SDK متوفر</span>
+      </div>
+      <div id="jdkPill" class="status-pill ready">
+        <span class="status-dot"></span>
+        <span id="jdkPillText" data-i18n="jdkReady">Java JDK متوفر</span>
+      </div>
+    </div>
+
+    <!-- Header Actions -->
+    <div class="header-actions">
+      <button id="btnSaveProj" class="btn-icon-action" onclick="app.saveProject()">
+        <span>💾</span> <span data-i18n="saveProject">حفظ المشروع</span>
+      </button>
+      <button id="btnLoadProj" class="btn-icon-action" onclick="app.loadProject()">
+        <span>📂</span> <span data-i18n="loadProject">فتح مشروع</span>
+      </button>
+      <button id="btnLangToggle" class="btn-icon-action" onclick="app.toggleLanguage()">
+        <span>🌐</span> <span id="langText">English</span>
+      </button>
+      <button id="btnThemeToggle" class="btn-icon-action" onclick="app.toggleTheme()">
+        <span id="themeIcon">☀️</span>
+      </button>
+      <button id="btnAboutDev" class="btn-icon-action" onclick="app.openModal('modalDev')">
+        <span>👨‍💻</span> <span data-i18n="aboutDev">عن المطور</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ==========================================
+       MAIN WORKSPACE
+       ========================================== -->
+  <div class="app-container">
+    
+    <!-- LEFT COLUMN: TABS & CONFIGURATION -->
+    <main class="main-workspace">
+      
+      <!-- Tab Navigation -->
+      <nav class="tab-nav">
+        <button class="tab-btn active" onclick="app.switchTab(0)" data-i18n="tab1">1. البيانات الأساسية</button>
+        <button class="tab-btn" onclick="app.switchTab(1)" data-i18n="tab2">2. الهوية والتصميم</button>
+        <button class="tab-btn" onclick="app.switchTab(2)" data-i18n="tab3">3. الصلاحيات والمميزات</button>
+        <button class="tab-btn" onclick="app.switchTab(3)" data-i18n="tab4">4. الإعلانات والإشعارات</button>
+        <button class="tab-btn" onclick="app.switchTab(4)" data-i18n="tab5">5. التوقيع والتصدير</button>
+      </nav>
+
+      <!-- TAB 1: BASIC SETTINGS -->
+      <section id="tabPanel0" class="tab-content-panel active">
+        <div class="form-group">
+          <label class="form-label" data-i18n="lblAppName">اسم التطبيق (App Title)</label>
+          <input type="text" id="cfg_app_title" class="form-control" placeholder="تطبيقي المميز" oninput="app.updatePreview()">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" data-i18n="lblPackageName">اسم الحزمة الفريد (Package Name)</label>
+          <input type="text" id="cfg_package_name" class="form-control" placeholder="com.example.webapp" oninput="app.updatePreview()">
+          <div class="form-hint">يجب أن يتكون من مقاطع باللغة الإنجليزية تفصل بينها نقاط (مثل com.mycompany.app).</div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div class="form-group">
+            <label class="form-label" data-i18n="lblVersionName">اسم الإصدار (Version Name)</label>
+            <input type="text" id="cfg_version_name" class="form-control" placeholder="1.0.0">
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="lblVersionCode">رقم الإصدار (Version Code)</label>
+            <input type="number" id="cfg_version_code" class="form-control" value="1" min="1">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" data-i18n="lblContentType">مصدر المحتوى الأساسي (Content Source)</label>
+          <div class="radio-cards-grid">
+            <label class="radio-card active" id="radioCardUrl">
+              <input type="radio" name="content_type" value="url" checked onchange="app.switchContentType('url')">
+              <div>
+                <div class="radio-card-title" data-i18n="optWebUrl">رابط موقع إلكتروني مباشر</div>
+                <div class="radio-card-sub">تحويل أي موقع متجاوب ومباشر إلى تطبيق</div>
+              </div>
+            </label>
+            <label class="radio-card" id="radioCardLocal">
+              <input type="radio" name="content_type" value="local" onchange="app.switchContentType('local')">
+              <div>
+                <div class="radio-card-title" data-i18n="optLocalHtml">مجلد محلي (HTML / CSS / JS)</div>
+                <div class="radio-card-sub">تطبيق أوفلاين مدمج يعمل بدون إنترنت</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- URL Input -->
+        <div id="sectionWebUrl" class="form-group">
+          <label class="form-label" data-i18n="lblWebUrl">رابط الموقع (Web URL)</label>
+          <input type="url" id="cfg_web_url" class="form-control" placeholder="https://example.com" oninput="app.updatePreview()">
+        </div>
+
+        <!-- Local Directory Input -->
+        <div id="sectionLocalDir" class="form-group" style="display: none;">
+          <label class="form-label" data-i18n="lblLocalDir">مسار المجلد المحلي (Local Directory)</label>
+          <div class="input-with-button">
+            <input type="text" id="cfg_local_html_dir" class="form-control" placeholder="اختر مجلداً يحتوي على index.html..." readonly>
+            <button class="btn-secondary" onclick="app.browseLocalDir()" data-i18n="btnBrowseDir">تحديد المجلد...</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" data-i18n="lblOrientation">اتجاه الشاشة (Screen Orientation)</label>
+          <select id="cfg_orientation" class="form-control">
+            <option value="auto" data-i18n="optOrientAuto">تلقائي (حسب تدوير الجهاز)</option>
+            <option value="portrait" data-i18n="optOrientPortrait">عمودي فقط (Portrait)</option>
+            <option value="landscape" data-i18n="optOrientLandscape">أفقي فقط (Landscape)</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- TAB 2: BRANDING & UI -->
+      <section id="tabPanel1" class="tab-content-panel">
+        <div class="form-group">
+          <label class="form-label" data-i18n="lblAppIcon">أيقونة التطبيق (App Icon - PNG/JPG)</label>
+          <div class="input-with-button">
+            <input type="text" id="cfg_app_icon_path" class="form-control" placeholder="اختر صورة الأيقونة..." readonly>
+            <button class="btn-secondary" onclick="app.browseIcon()" data-i18n="btnBrowseIcon">اختيار أيقونة...</button>
+          </div>
+          <div class="form-hint" data-i18n="iconHint">يتم تحويل وتوليد كافة مقاسات الأندرويد تلقائياً (48x48 حتى 192x192).</div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 24px 0;">
+
+        <h3 class="form-label" style="font-size: 15px; margin-bottom: 16px;" data-i18n="lblSplashTitle">شاشة البداية الافتتاحية (Splash Screen)</h3>
+        
+        <div class="form-group">
+          <label class="form-label" data-i18n="lblSplashLogo">شعار شاشة البداية (اختياري)</label>
+          <div class="input-with-button">
+            <input type="text" id="cfg_splash_image_path" class="form-control" placeholder="اختر صورة الشعار..." readonly>
+            <button class="btn-secondary" onclick="app.browseSplash()" data-i18n="btnBrowseSplash">اختيار صورة...</button>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div class="form-group">
+            <label class="form-label" data-i18n="lblSplashBg">لون خلفية شاشة البداية</label>
+            <div class="color-picker-wrapper">
+              <input type="color" id="cfg_splash_bg_color" class="color-input" value="#1e293b" oninput="app.updatePreview()">
+              <input type="text" id="cfg_splash_bg_color_hex" class="form-control" value="#1e293b" style="width: 120px;" oninput="app.syncColor(this.value, 'cfg_splash_bg_color')">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="lblSplashDuration">مدة الظهور بالثواني</label>
+            <input type="number" id="cfg_splash_duration" class="form-control" value="3" min="0" max="10">
+          </div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 24px 0;">
+
+        <h3 class="form-label" style="font-size: 15px; margin-bottom: 16px;" data-i18n="lblWebViewProps">خصائص وسلوكيات WebView</h3>
+
+        <div class="switch-item">
+          <span class="switch-label" data-i18n="chkPullToRefresh">تفعيل السحب للتحديث (Pull-to-Refresh)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="cfg_pull_to_refresh" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="switch-item">
+          <span class="switch-label" data-i18n="chkProgressBar">إظهار شريط تقدم تحميل الصفحة (Progress Bar)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="cfg_show_progress_bar" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="form-group" style="padding: 10px 16px; background: var(--bg-input); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+          <label class="form-label" style="margin-bottom: 8px;" data-i18n="lblProgressColor">لون شريط التقدم:</label>
+          <div class="color-picker-wrapper">
+            <input type="color" id="cfg_progress_bar_color" class="color-input" value="#3b82f6">
+            <input type="text" id="cfg_progress_bar_color_hex" class="form-control" value="#3b82f6" style="width: 120px;" oninput="app.syncColor(this.value, 'cfg_progress_bar_color')">
+          </div>
+        </div>
+
+        <div class="switch-item">
+          <span class="switch-label" data-i18n="chkPinchToZoom">تفعيل التكبير والتصغير بأصابع اليد (Pinch-to-Zoom)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="cfg_pinch_to_zoom" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+      </section>
+
+      <!-- TAB 3: PERMISSIONS & FEATURES -->
+      <section id="tabPanel2" class="tab-content-panel">
+        <h3 class="form-label" style="font-size: 15px; margin-bottom: 16px;" data-i18n="lblPermHeader">الصلاحيات وإمكانيات الجهاز (Device Permissions)</h3>
+
+        <div class="switch-item">
+          <span class="switch-label" data-i18n="permInternet">صلاحية الإنترنت الكامل (INTERNET & NETWORK_STATE)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="cfg_perm_internet" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="switch-item">
+          <span class="switch-label" data-i18n="permCamera">صلاحية الكاميرا (CAMERA)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="cfg_perm_camera">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="switch-item">
+          <span class="switch-label" data-i18n="permMic">صلاحية الميكروفون والصوت (RECORD_AUDIO)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="cfg_perm_microphone">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="switch-item">
+          <span class="switch-label" data-i18n="permLocation">صلاحية تحديد الموقع الجغرافي (ACCESS_FINE_LOCATION)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="cfg_perm_location">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="switch-item">
+          <span class="switch-label" data-i18n="permStorage">صلاحية تخزين الملفات (READ/WRITE_EXTERNAL_STORAGE)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="cfg_perm_storage" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 24px 0;">
+
+        <h3 class="form-label" style="font-size: 15px; margin-bottom: 16px;" data-i18n="lblAdvHeader">المميزات المتقدمة للتصفح (Advanced WebView Features)</h3>
+
+        <div class="switch-item">
+          <span class="switch-label" data-i18n="chkFileUpload">دعم اختيار ورفع الملفات والصور عبر النماذج (File Upload)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="cfg_enable_file_upload" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="switch-item">
+          <span class="switch-label" data-i18n="chkFileDownload">دعم تحميل الملفات إلى جهاز المستخدم (Download Manager)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="cfg_enable_file_download" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="switch-item">
+          <span class="switch-label" data-i18n="chkMediaPlayback">دعم تشغيل الفيديو والصوت والشاشة الكاملة (HTML5 Media)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="cfg_enable_media_playback" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="switch-item">
+          <span class="switch-label" data-i18n="chkOfflinePage">تفعيل صفحة مخصصة أنيقة عند انقطاع الإنترنت (Offline Page)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="cfg_custom_offline_page" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="form-group" style="margin-top: 16px;">
+          <label class="form-label" data-i18n="lblExtLinks">سلوك فتح الروابط الخارجية (External Links Mode)</label>
+          <select id="cfg_external_links_mode" class="form-control">
+            <option value="browser" data-i18n="optExtBrowser">فتح الروابط الخارجية في متصفح خارجي (Chrome / Edge)</option>
+            <option value="webview" data-i18n="optExtWebView">فتح جميع الروابط داخل التطبيق نفسه (In-App WebView)</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- TAB 4: MONETIZATION & NOTIFICATIONS -->
+      <section id="tabPanel3" class="tab-content-panel">
+        <h3 class="form-label" style="font-size: 15px; margin-bottom: 16px;" data-i18n="lblAdMobHeader">إعلانات جوجل أدموب (Google AdMob Monetization)</h3>
+
+        <div class="switch-item">
+          <span class="switch-label" data-i18n="chkEnableAdMob">تفعيل إعلانات Google AdMob في التطبيق</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="cfg_admob_enabled" onchange="app.toggleAdMobFields(this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div id="admobFieldsGroup" style="display: none; padding: 14px; background: var(--bg-input); border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 24px;">
+          <div class="form-group">
+            <label class="form-label" data-i18n="lblAdMobAppId">معرف التطبيق (AdMob App ID)</label>
+            <input type="text" id="cfg_admob_app_id" class="form-control" placeholder="ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy">
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="lblAdMobBannerId">معرف الإعلان البانر (Banner Ad Unit ID)</label>
+            <input type="text" id="cfg_admob_banner_id" class="form-control" placeholder="ca-app-pub-xxxxxxxxxxxxxxxx/zzzzzzzzzz">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" data-i18n="lblAdMobInterId">معرف الإعلان البيني (Interstitial Ad Unit ID)</label>
+            <input type="text" id="cfg_admob_interstitial_id" class="form-control" placeholder="ca-app-pub-xxxxxxxxxxxxxxxx/wwwwwwwwww">
+          </div>
+        </div>
+
+        <h3 class="form-label" style="font-size: 15px; margin-bottom: 16px;" data-i18n="lblOneSignalHeader">إشعارات OneSignal التفاعلية (Push Notifications)</h3>
+
+        <div class="switch-item">
+          <span class="switch-label" data-i18n="chkEnableOneSignal">تفعيل خدمة الإشعارات التفاعلية عبر OneSignal</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="cfg_onesignal_enabled" onchange="app.toggleOneSignalFields(this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div id="onesignalFieldsGroup" style="display: none; padding: 14px; background: var(--bg-input); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" data-i18n="lblOneSignalAppId">معرف تطبيق OneSignal (App ID)</label>
+            <input type="text" id="cfg_onesignal_app_id" class="form-control" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: SIGNING & BUILD -->
+      <section id="tabPanel4" class="tab-content-panel">
+        <h3 class="form-label" style="font-size: 15px; margin-bottom: 16px;" data-i18n="lblKeystoreHeader">شهادة وتوقيع التطبيق الرقمي (Keystore Signing)</h3>
+
+        <div class="radio-cards-grid">
+          <label class="radio-card active" id="radioKeyDebug">
+            <input type="radio" name="keystore_type" value="debug" checked onchange="app.switchKeyType('debug')">
+            <div>
+              <div class="radio-card-title" data-i18n="optDebugKey">توقيع بمفتاح تجريبي تلقائي (Debug)</div>
+              <div class="radio-card-sub">مثالي للتجربة والتثبيت السريع على هاتفك مباشرة</div>
+            </div>
+          </label>
+          <label class="radio-card" id="radioKeyCustom">
+            <input type="radio" name="keystore_type" value="custom" onchange="app.switchKeyType('custom')">
+            <div>
+              <div class="radio-card-title" data-i18n="optCustomKey">توقيع بمفتاح خاص مخصص (Release)</div>
+              <div class="radio-card-sub">مطلوب لرفع التطبيق رسمياً على متجر Google Play</div>
+            </div>
+          </label>
+        </div>
+
+        <div id="customKeystoreFields" style="display: none; padding: 18px; background: var(--bg-input); border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-top: 14px;">
+          <div class="form-group">
+            <label class="form-label" data-i18n="lblKeyPath">مسار ملف المفتاح (.jks / .keystore)</label>
+            <div class="input-with-button">
+              <input type="text" id="cfg_keystore_path" class="form-control" placeholder="اختر ملف .jks أو قم بتوليد مفتاح جديد..." readonly>
+              <button class="btn-secondary" onclick="app.browseKeystore()" data-i18n="btnBrowseKey">اختيار ملف...</button>
+            </div>
+            <button class="btn-secondary" style="margin-top: 8px; width: 100%; padding: 10px; background: rgba(56, 189, 248, 0.1); border-color: var(--accent); color: var(--accent);" onclick="app.openModal('modalKey')" data-i18n="btnGenerateKey">
+              ✨ إنشاء مفتاح جديد عبر المولد المدمج...
+            </button>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+              <label class="form-label" data-i18n="lblKeyPass">كلمة مرور المفتاح (Keystore Password)</label>
+              <input type="password" id="cfg_keystore_password" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label" data-i18n="lblKeyAlias">الاسم المستعار (Key Alias)</label>
+              <input type="text" id="cfg_key_alias" class="form-control">
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" data-i18n="lblKeyAliasPass">كلمة مرور الاسم المستعار (Key Password)</label>
+            <input type="password" id="cfg_key_password" class="form-control">
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- RIGHT COLUMN: INTERACTIVE PHONE MOCKUP & ACTIONS -->
+    <aside class="preview-sidebar">
+      
+      <div class="phone-mockup-card">
+        <h4 style="font-size: 13.5px; font-weight: 700; margin-bottom: 14px; color: var(--text-secondary);" data-i18n="mockupTitle">معاينة التطبيق التفاعلية</h4>
+
+        <!-- Real Smartphone Frame -->
+        <div class="phone-frame">
+          <div class="phone-notch">
+            <div class="phone-speaker"></div>
+            <div class="phone-camera"></div>
+          </div>
+
+          <div class="phone-screen" id="phoneScreen">
+            
+            <!-- Android Status Bar -->
+            <div class="phone-status-bar">
+              <span id="phoneClock">12:30</span>
+              <span>📶 🔋</span>
+            </div>
+
+            <!-- App Bar -->
+            <div class="phone-app-bar" id="phoneAppBar">
+              <span style="font-size: 14px;">☰</span>
+              <span class="phone-app-bar-title" id="previewAppTitle">تطبيقي المميز</span>
+            </div>
+
+            <!-- App Screen Content -->
+            <div class="phone-content" id="phoneContent">
+              <img id="previewAppIcon" class="phone-app-icon-img" src="assets/default_icon.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'80\' height=\'80\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2338bdf8\' stroke-width=\'2\'><rect x=\'3\' y=\'3\' width=\'18\' height=\'18\' rx=\'4\'/><circle cx=\'12\' cy=\'12\' r=\'4\'/></svg>'">
+              <div class="phone-app-title-text" id="previewAppTitleSub">تطبيقي المميز</div>
+              <div class="phone-app-pkg-text" id="previewAppPkg">com.example.webapp</div>
+            </div>
+
+            <!-- Splash Screen Preview Overlay -->
+            <div class="phone-splash-overlay" id="phoneSplashOverlay">
+              <img id="previewSplashLogo" class="phone-splash-logo" src="" style="display: none;">
+              <div class="phone-splash-loader"></div>
+            </div>
+
+          </div>
+        </div>
+
+        <button class="btn-test-splash" onclick="app.triggerSplashTest()" data-i18n="btnTestSplash">🎬 اختبار شاشة البداية (Splash)</button>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="cta-button-group">
+        <button id="btnFastApk" class="btn-build-primary btn-build-apk" onclick="app.startBuild(false)">
+          <span>⚡</span> <span data-i18n="btnBuildApk">بناء ملف APK الآن</span>
+        </button>
+        <button id="btnFastAab" class="btn-build-primary btn-build-aab" onclick="app.startBuild(true)">
+          <span>📦</span> <span data-i18n="btnBuildAab">بناء AAB (لجوجل بلاي)</span>
+        </button>
+        <p style="font-size: 11px; text-align: center; color: var(--text-muted); line-height: 1.4;" data-i18n="exportHint">يتم حفظ التطبيقات الناتجة تلقائياً في مجلد WebToApp_Builds على سطح المكتب.</p>
+      </div>
+
+    </aside>
+
+  </div>
+
+  <!-- ==========================================
+       BOTTOM CONSOLE & STEPPER
+       ========================================== -->
+  <div class="bottom-console-card">
+    <div class="console-header-bar">
+      
+      <div class="console-title-group">
+        <span class="console-title" data-i18n="consoleHeader">سجل بناء وتجميع التطبيق (Build Console)</span>
+        
+        <!-- Step Progress Stepper -->
+        <div class="build-stepper" id="buildStepper">
+          <div class="step-item" id="step1">1. <span data-i18n="stepPrep">تجهيز</span></div>
+          <div class="step-item" id="step2">2. <span data-i18n="stepGen">توليد الكود</span></div>
+          <div class="step-item" id="step3">3. <span data-i18n="stepSign">التوقيع</span></div>
+          <div class="step-item" id="step4">4. <span data-i18n="stepGradle">تجميع Gradle</span></div>
+          <div class="step-item" id="step5">5. <span data-i18n="stepDone">جاهز 🎉</span></div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px;">
+        <button class="btn-icon-action" style="padding: 5px 12px; font-size: 12px;" onclick="app.copyLog()" data-i18n="btnCopyLog">📋 نسخ السجل</button>
+        <button class="btn-icon-action" style="padding: 5px 12px; font-size: 12px;" onclick="app.clearLog()" data-i18n="btnClearLog">🧹 مسح</button>
+        <button class="btn-icon-action" style="padding: 5px 12px; font-size: 12px; border-color: var(--border-focus);" onclick="app.openOutputFolder()" data-i18n="btnOpenFolder">📁 فتح مجلد المخرجات</button>
+      </div>
+
+    </div>
+
+    <!-- Terminal Box -->
+    <div class="terminal-box" id="terminalConsole">مرحباً بك في WebToApp Studio Pro - جاهز للعمل.</div>
+  </div>
+
+  <!-- ==========================================
+       KEYSTORE GENERATOR MODAL
+       ========================================== -->
+  <div class="modal-backdrop" id="modalKey">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 data-i18n="modalKeyTitle">مولّد مفاتيح التوقيع الرقمي (Keystore Generator)</h3>
+        <button class="modal-close-btn" onclick="app.closeModal('modalKey')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 18px;" data-i18n="modalKeyDesc">توليد شهادة توقيع رقمية رسمية بصيغة JKS لرفع التطبيق على متجر Google Play بأمان.</p>
+
+        <div class="form-group">
+          <label class="form-label" data-i18n="lblOutPath">مكان حفظ ملف المفتاح:</label>
+          <div class="input-with-button">
+            <input type="text" id="gen_output_path" class="form-control" placeholder="اختر المسار واسم الملف (مثل mykey.jks)..." readonly>
+            <button class="btn-secondary" onclick="app.chooseKeystoreSavePath()" data-i18n="btnChooseOut">تحديد المكان...</button>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label" data-i18n="lblKeyAlias">الاسم المستعار (Alias):</label>
+            <input type="text" id="gen_alias" class="form-control" value="key0">
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="lblKeyPass">كلمة المرور (Password):</label>
+            <input type="password" id="gen_password" class="form-control" placeholder="6 أحرف على الأقل">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" data-i18n="lblFullName">الاسم بالكامل (First & Last Name):</label>
+          <input type="text" id="gen_name" class="form-control" value="Eng Ahmed Abdelaziz">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label" data-i18n="lblOrgUnit">الوحدة التنظيمية (Org Unit):</label>
+            <input type="text" id="gen_org_unit" class="form-control" value="Development">
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="lblOrgName">اسم المنظمة أو الشركة (Org):</label>
+            <input type="text" id="gen_org_name" class="form-control" value="Software Studio">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label" data-i18n="lblCity">المدينة (City):</label>
+            <input type="text" id="gen_city" class="form-control" value="Cairo">
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="lblState">المحافظة (State):</label>
+            <input type="text" id="gen_state" class="form-control" value="Cairo">
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="lblCountry">الدولة (Country Code):</label>
+            <input type="text" id="gen_country" class="form-control" value="EG" maxlength="2">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" data-i18n="lblYears">مدة الصلاحية بالسنوات:</label>
+          <input type="number" id="gen_validity" class="form-control" value="25" min="1">
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="app.closeModal('modalKey')" data-i18n="btnCloseModal">إلغاء</button>
+        <button class="btn-secondary" style="background: var(--primary-gradient); color: white; border: none; padding: 10px 18px;" onclick="app.confirmGenerateKeystore()" data-i18n="btnConfirmGen">🚀 توليد المفتاح وحفظه الآن</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       ABOUT DEVELOPER MODAL
+       ========================================== -->
+  <div class="modal-backdrop" id="modalDev">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 data-i18n="modalDevTitle">عن المطور ومطور البرنامج</h3>
+        <button class="modal-close-btn" onclick="app.closeModal('modalDev')">&times;</button>
+      </div>
+      <div class="modal-body" style="text-align: center; padding: 32px 24px;">
+        <div style="font-size: 56px; margin-bottom: 12px;">👨‍💻</div>
+        <h2 style="font-size: 20px; font-weight: 800; margin-bottom: 6px;" data-i18n="devName">م. أحمد عبد العزيز (Eng Ahmed Abdelaziz)</h2>
+        <p style="font-size: 13.5px; color: var(--text-secondary); margin-bottom: 20px;" data-i18n="devRole">مهندس برمجيات ومطور حلول الذكاء الاصطناعي والتطبيقات الهجينة</p>
+        
+        <div style="background: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px; text-align: start; display: flex; flex-direction: column; gap: 10px; font-size: 13.5px;">
+          <div>📧 <strong>البريد الإلكتروني:</strong> <span style="color: var(--accent);">eng.ahmed.abdelaziz.2022@gmail.com</span></div>
+          <div>💬 <strong>واتساب:</strong> <span style="color: #22c55e;">+201024735044</span></div>
+          <div>🐙 <strong>حساب GitHub:</strong> <span style="color: var(--primary);">github.com/Eng0Ahmed</span></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="app.closeModal('modalDev')" data-i18n="btnCloseModal">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/i18n.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

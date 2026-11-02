@@ -1,0 +1,294 @@
+/**
+ * WebToApp Studio Pro - i18n Translations Dictionary
+ * Complete Arabic & English bilingual support with instant switching.
+ */
+
+const translations = {
+  ar: {
+    // App Bar
+    appTitle: "WebToApp Studio Pro",
+    appSubtitle: "تحويل المواقع ومشاريع HTML إلى تطبيقات أندرويد (APK & AAB)",
+    sdkReady: "Android SDK متوفر",
+    sdkMissing: "Android SDK غير موجود",
+    jdkReady: "Java JDK متوفر",
+    jdkMissing: "Java JDK غير موجود",
+    saveProject: "حفظ المشروع",
+    loadProject: "فتح مشروع",
+    aboutDev: "عن المطور",
+    langToggle: "English",
+    themeToggle: "المظهر",
+
+    // Tabs
+    tab1: "1. البيانات الأساسية",
+    tab2: "2. الهوية والتصميم",
+    tab3: "3. الصلاحيات والمميزات",
+    tab4: "4. الإعلانات والإشعارات",
+    tab5: "5. التوقيع والتصدير",
+
+    // Tab 1: Basic
+    lblAppName: "اسم التطبيق (App Title)",
+    phAppName: "مثال: تطبيقي المميز",
+    lblPackageName: "اسم الحزمة الفريد (Package Name)",
+    phPackageName: "مثال: com.company.myapp",
+    lblVersionName: "اسم الإصدار (Version Name)",
+    phVersionName: "1.0.0",
+    lblVersionCode: "رقم الإصدار الداخلي (Version Code)",
+    lblContentType: "مصدر المحتوى الأساسي (Content Source)",
+    optWebUrl: "رابط موقع إلكتروني مباشر (Live Web URL)",
+    optLocalHtml: "مجلد محلي يحتوي على ملفات HTML/CSS/JS (Offline)",
+    lblWebUrl: "رابط الموقع (Web URL)",
+    phWebUrl: "https://example.com",
+    lblLocalDir: "مسار المجلد المحلي (Local Directory)",
+    btnBrowseDir: "تحديد المجلد...",
+    lblOrientation: "اتجاه الشاشة (Screen Orientation)",
+    optOrientAuto: "تلقائي (حسب تدوير الجهاز)",
+    optOrientPortrait: "عمودي فقط (Portrait)",
+    optOrientLandscape: "أفقي فقط (Landscape)",
+
+    // Tab 2: Branding
+    lblAppIcon: "أيقونة التطبيق (App Icon - PNG/JPG)",
+    btnBrowseIcon: "اختيار أيقونة...",
+    iconHint: "يتم تحويل وتوليد كافة مقاسات الأندرويد تلقائياً (48x48 حتى 192x192).",
+    lblSplashTitle: "شاشة البداية الافتتاحية (Splash Screen)",
+    lblSplashLogo: "شعار شاشة البداية (اختياري)",
+    btnBrowseSplash: "اختيار صورة...",
+    lblSplashBg: "لون خلفية شاشة البداية (Splash Background Color)",
+    lblSplashDuration: "مدة ظهور شاشة البداية بالثواني (Splash Duration)",
+    lblWebViewProps: "خصائص وسلوكيات WebView",
+    chkPullToRefresh: "تفعيل السحب للتحديث (Pull-to-Refresh)",
+    chkProgressBar: "إظهار شريط تقدم تحميل الصفحة (Progress Bar)",
+    lblProgressColor: "لون شريط التقدم:",
+    chkPinchToZoom: "تفعيل التكبير والتصغير بأصابع اليد (Pinch-to-Zoom)",
+
+    // Tab 3: Permissions
+    lblPermHeader: "الصلاحيات وإمكانيات الجهاز (Device Permissions)",
+    permInternet: "صلاحية الإنترنت الكامل (INTERNET & NETWORK_STATE)",
+    permCamera: "صلاحية الكاميرا (CAMERA)",
+    permMic: "صلاحية الميكروفون والصوت (RECORD_AUDIO)",
+    permLocation: "صلاحية تحديد الموقع الجغرافي (ACCESS_FINE_LOCATION)",
+    permStorage: "صلاحية تخزين الملفات (READ/WRITE_EXTERNAL_STORAGE)",
+    lblAdvHeader: "المميزات المتقدمة للتصفح (Advanced WebView Features)",
+    chkFileUpload: "دعم اختيار ورفع الملفات والصور عبر النماذج (File Upload)",
+    chkFileDownload: "دعم تحميل الملفات إلى جهاز المستخدم (Download Manager)",
+    chkMediaPlayback: "دعم تشغيل الفيديو والصوت والشاشة الكاملة (HTML5 Media)",
+    chkOfflinePage: "تفعيل صفحة مخصصة أنيقة عند انقطاع الإنترنت (Offline Page)",
+    lblExtLinks: "سلوك فتح الروابط الخارجية (External Links Mode)",
+    optExtBrowser: "فتح الروابط الخارجية في متصفح خارجي (Chrome / Edge)",
+    optExtWebView: "فتح جميع الروابط داخل التطبيق نفسه (In-App WebView)",
+
+    // Tab 4: Monetization
+    lblAdMobHeader: "إعلانات جوجل أدموب (Google AdMob Monetization)",
+    chkEnableAdMob: "تفعيل إعلانات Google AdMob في التطبيق",
+    lblAdMobAppId: "معرف التطبيق (AdMob App ID)",
+    lblAdMobBannerId: "معرف الإعلان البانر (Banner Ad Unit ID)",
+    lblAdMobInterId: "معرف الإعلان البيني (Interstitial Ad Unit ID)",
+    lblOneSignalHeader: "إشعارات OneSignal التفاعلية (Push Notifications)",
+    chkEnableOneSignal: "تفعيل خدمة الإشعارات التفاعلية عبر OneSignal",
+    lblOneSignalAppId: "معرف تطبيق OneSignal (App ID)",
+
+    // Tab 5: Signing & Build
+    lblKeystoreHeader: "شهادة وتوقيع التطبيق الرقمي (Keystore Signing)",
+    optDebugKey: "توقيع بمفتاح تجريبي تلقائي (Debug Keystore - للتجربة والتثبيت المباشر)",
+    optCustomKey: "توقيع بمفتاح خاص مخصص (Custom Release Keystore - لمتجر Google Play)",
+    lblKeyPath: "مسار ملف المفتاح (.jks / .keystore)",
+    btnBrowseKey: "اختيار ملف...",
+    btnGenerateKey: "✨ إنشاء مفتاح جديد عبر المولد المدمج...",
+    lblKeyPass: "كلمة مرور المفتاح (Keystore Password)",
+    lblKeyAlias: "الاسم المستعار للمفتاح (Key Alias)",
+    lblKeyAliasPass: "كلمة مرور الاسم المستعار (Key Password)",
+
+    // Right Pane - Phone Mockup
+    mockupTitle: "معاينة التطبيق التفاعلية",
+    mockupAppTitle: "تطبيقي المميز",
+    mockupPkg: "com.example.webapp",
+    btnTestSplash: "🎬 اختبار شاشة البداية (Splash)",
+    btnBuildApk: "⚡ بناء ملف APK الآن",
+    btnBuildAab: "📦 بناء AAB (لجوجل بلاي)",
+    exportHint: "يتم حفظ التطبيقات الناتجة تلقائياً في مجلد WebToApp_Builds على سطح المكتب.",
+
+    // Bottom Console
+    consoleHeader: "سجل بناء وتجميع التطبيق (Build Console)",
+    stepPrep: "تجهيز الملفات",
+    stepGen: "توليد الكود",
+    stepSign: "توقيع الشهادة",
+    stepGradle: "تجميع Gradle",
+    stepDone: "جاهز للتحميل",
+    btnCopyLog: "📋 نسخ السجل",
+    btnClearLog: "🧹 مسح",
+    btnOpenFolder: "📁 فتح مجلد المخرجات",
+
+    // Keystore Generator Modal
+    modalKeyTitle: "مولّد مفاتيح التوقيع الرقمي (Keystore Generator)",
+    modalKeyDesc: "توليد شهادة توقيع رقمية رسمية بصيغة JKS لرفع التطبيق على متجر Google Play بأمان.",
+    lblOutPath: "مكان حفظ ملف المفتاح:",
+    btnChooseOut: "تحديد المكان...",
+    lblFullName: "الاسم بالكامل (First & Last Name):",
+    lblOrgUnit: "الوحدة التنظيمية (Organizational Unit):",
+    lblOrgName: "اسم المنظمة أو الشركة (Organization):",
+    lblCity: "المدينة أو البلدة (City / Locality):",
+    lblState: "المحافظة أو الولاية (State / Province):",
+    lblCountry: "رمز الدولة من حرفين (Country Code):",
+    lblYears: "مدة الصلاحية بالسنوات (Validity Years):",
+    btnConfirmGen: "🚀 توليد المفتاح وحفظه الآن",
+    btnCloseModal: "إلغاء",
+
+    // Developer Modal
+    modalDevTitle: "عن المطور ومطور البرنامج",
+    devName: "م. أحمد عبد العزيز (Eng Ahmed Abdelaziz)",
+    devRole: "مهندس برمجيات ومطور حلول الذكاء الاصطناعي والتطبيقات الهجينة",
+    devEmail: "eng.ahmed.abdelaziz.2022@gmail.com",
+    devPhone: "+201024735044",
+    devGitHub: "https://github.com/Eng0Ahmed",
+
+    // Notifications & Status
+    statusReady: "جاهز للعمل",
+    statusBuilding: "جارٍ البناء والتجميع...",
+    statusSuccess: "تم بناء التطبيق بنجاح!",
+    statusError: "حدث خطأ أثناء البناء",
+    copied: "تم النسخ بنجاح!"
+  },
+
+  en: {
+    // App Bar
+    appTitle: "WebToApp Studio Pro",
+    appSubtitle: "Convert Websites & HTML5 projects into native Android Apps (APK & AAB)",
+    sdkReady: "Android SDK Ready",
+    sdkMissing: "Android SDK Missing",
+    jdkReady: "Java JDK Ready",
+    jdkMissing: "Java JDK Missing",
+    saveProject: "Save Project",
+    loadProject: "Open Project",
+    aboutDev: "About Developer",
+    langToggle: "العربية",
+    themeToggle: "Theme",
+
+    // Tabs
+    tab1: "1. Basic Settings",
+    tab2: "2. Branding & UI",
+    tab3: "3. Permissions & Features",
+    tab4: "4. Monetization & Push",
+    tab5: "5. Signing & Export",
+
+    // Tab 1: Basic
+    lblAppName: "Application Title",
+    phAppName: "e.g. My Awesome App",
+    lblPackageName: "Unique Package Name",
+    phPackageName: "e.g. com.company.myapp",
+    lblVersionName: "Version Name",
+    phVersionName: "1.0.0",
+    lblVersionCode: "Internal Version Code",
+    lblContentType: "Primary Content Source",
+    optWebUrl: "Live Website URL",
+    optLocalHtml: "Local HTML5/CSS/JS Directory (100% Offline)",
+    lblWebUrl: "Website URL",
+    phWebUrl: "https://example.com",
+    lblLocalDir: "Local Directory Path",
+    btnBrowseDir: "Browse Folder...",
+    lblOrientation: "Screen Orientation",
+    optOrientAuto: "Auto-Rotate (Sensor)",
+    optOrientPortrait: "Portrait Only",
+    optOrientLandscape: "Landscape Only",
+
+    // Tab 2: Branding
+    lblAppIcon: "Application Icon (PNG / JPG)",
+    btnBrowseIcon: "Select Icon...",
+    iconHint: "All Android density mipmaps (48x48 up to 192x192) will be generated automatically.",
+    lblSplashTitle: "Splash Screen Setup",
+    lblSplashLogo: "Splash Screen Logo (Optional)",
+    btnBrowseSplash: "Select Image...",
+    lblSplashBg: "Splash Background Color",
+    lblSplashDuration: "Splash Duration (Seconds)",
+    lblWebViewProps: "WebView Features & Behaviors",
+    chkPullToRefresh: "Enable Pull-to-Refresh Gesture",
+    chkProgressBar: "Show Page Loading Progress Bar",
+    lblProgressColor: "Progress Bar Color:",
+    chkPinchToZoom: "Enable Pinch-to-Zoom Gestures",
+
+    // Tab 3: Permissions
+    lblPermHeader: "Device Permissions",
+    permInternet: "Internet Access (INTERNET & NETWORK_STATE)",
+    permCamera: "Camera Access (CAMERA)",
+    permMic: "Microphone & Audio (RECORD_AUDIO)",
+    permLocation: "Geolocation Access (ACCESS_FINE_LOCATION)",
+    permStorage: "Storage Access (READ/WRITE_EXTERNAL_STORAGE)",
+    lblAdvHeader: "Advanced WebView Features",
+    chkFileUpload: "Support HTML5 File & Image Uploads (File Chooser)",
+    chkFileDownload: "Support File Downloads (Download Manager)",
+    chkMediaPlayback: "Support Fullscreen HTML5 Video & Audio",
+    chkOfflinePage: "Enable Beautiful Built-in Offline Fallback Page",
+    lblExtLinks: "External Links Handling",
+    optExtBrowser: "Open External Links in System Browser (Chrome / Edge)",
+    optExtWebView: "Open All Links Inside App WebView",
+
+    // Tab 4: Monetization
+    lblAdMobHeader: "Google AdMob Monetization",
+    chkEnableAdMob: "Enable Google AdMob in Application",
+    lblAdMobAppId: "AdMob App ID",
+    lblAdMobBannerId: "Banner Ad Unit ID",
+    lblAdMobInterId: "Interstitial Ad Unit ID",
+    lblOneSignalHeader: "OneSignal Push Notifications",
+    chkEnableOneSignal: "Enable OneSignal Push Notification Service",
+    lblOneSignalAppId: "OneSignal App ID",
+
+    // Tab 5: Signing & Build
+    lblKeystoreHeader: "Digital Keystore Signing",
+    optDebugKey: "Sign with Default Debug Keystore (For testing & direct APK install)",
+    optCustomKey: "Sign with Custom Release Keystore (For Google Play Store submission)",
+    lblKeyPath: "Keystore File Path (.jks / .keystore)",
+    btnBrowseKey: "Browse File...",
+    btnGenerateKey: "✨ Generate New Key with Built-in Tool...",
+    lblKeyPass: "Keystore Password",
+    lblKeyAlias: "Key Alias",
+    lblKeyAliasPass: "Key Alias Password",
+
+    // Right Pane - Phone Mockup
+    mockupTitle: "Interactive Live Preview",
+    mockupAppTitle: "My Awesome App",
+    mockupPkg: "com.example.webapp",
+    btnTestSplash: "🎬 Test Splash Screen",
+    btnBuildApk: "⚡ Build APK Now",
+    btnBuildAab: "📦 Build AAB (Google Play)",
+    exportHint: "Generated outputs will be saved to WebToApp_Builds on your Desktop.",
+
+    // Bottom Console
+    consoleHeader: "Build & Compilation Console",
+    stepPrep: "Preparing",
+    stepGen: "Code Gen",
+    stepSign: "Signing",
+    stepGradle: "Gradle Build",
+    stepDone: "Ready",
+    btnCopyLog: "📋 Copy Log",
+    btnClearLog: "🧹 Clear",
+    btnOpenFolder: "📁 Open Output Folder",
+
+    // Keystore Generator Modal
+    modalKeyTitle: "Digital Keystore Generator",
+    modalKeyDesc: "Generate an official JKS signing certificate to publish your app securely on Google Play.",
+    lblOutPath: "Save Keystore File To:",
+    btnChooseOut: "Browse Location...",
+    lblFullName: "First & Last Name:",
+    lblOrgUnit: "Organizational Unit:",
+    lblOrgName: "Organization / Company:",
+    lblCity: "City / Locality:",
+    lblState: "State / Province:",
+    lblCountry: "Two-letter Country Code:",
+    lblYears: "Validity Duration (Years):",
+    btnConfirmGen: "🚀 Generate and Save Key",
+    btnCloseModal: "Cancel",
+
+    // Developer Modal
+    modalDevTitle: "About Developer",
+    devName: "Eng. Ahmed Abdelaziz",
+    devRole: "Software Engineer | AI & Hybrid Apps Specialist",
+    devEmail: "eng.ahmed.abdelaziz.2022@gmail.com",
+    devPhone: "+201024735044",
+    devGitHub: "https://github.com/Eng0Ahmed",
+
+    // Notifications & Status
+    statusReady: "Ready",
+    statusBuilding: "Building Application...",
+    statusSuccess: "Application Built Successfully!",
+    statusError: "Build Error Encountered",
+    copied: "Copied successfully!"
+  }
+};

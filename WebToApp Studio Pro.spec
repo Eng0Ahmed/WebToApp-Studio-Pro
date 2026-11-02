@@ -1,12 +1,18 @@
 # -*- mode: python ; coding: utf-8 -*-
 from PyInstaller.utils.hooks import collect_all
 
-datas = [('templates', 'templates')]
+datas = [
+    ('templates', 'templates'),
+    ('web', 'web')
+]
 binaries = []
-hiddenimports = []
-tmp_ret = collect_all('customtkinter')
-datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
+hiddenimports = ['clr', 'pythonnet', 'webview']
 
+tmp_ctk = collect_all('customtkinter')
+datas += tmp_ctk[0]; binaries += tmp_ctk[1]; hiddenimports += tmp_ctk[2]
+
+tmp_wv = collect_all('webview')
+datas += tmp_wv[0]; binaries += tmp_wv[1]; hiddenimports += tmp_wv[2]
 
 a = Analysis(
     ['main.py'],

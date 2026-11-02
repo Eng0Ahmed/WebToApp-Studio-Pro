@@ -27,10 +27,10 @@
 ## 🌟 Overview / نظرة عامة
 
 ### English:
-**WebToApp Studio Pro** is an all-in-one desktop application built with Python and CustomTkinter designed to convert responsive websites and offline HTML5/CSS/JavaScript directories into production-ready Android applications (`.apk` and `.aab`). It features automated Android project synthesis, dynamic Keystore generation, permissions toggles, AdMob monetization, OneSignal push notifications, and integrated Gradle compilation without requiring Android Studio.
+**WebToApp Studio Pro** is an all-in-one desktop application built with Python and an ultra-modern Web UI (HTML5/CSS3/JavaScript powered by `pywebview`) with seamless fallback to CustomTkinter. It is designed to convert responsive websites and offline HTML5/CSS/JavaScript directories into production-ready Android applications (`.apk` and `.aab`). It features bilingual support (Arabic RTL / English LTR), Dark & Light theme switcher, interactive real-time smartphone mockup, drag & drop, dynamic Keystore generation, permissions toggles, AdMob monetization, OneSignal push notifications, and integrated Gradle compilation without requiring Android Studio.
 
 ### العربية:
-**WebToApp Studio Pro** هو برنامج سطح مكتب متكامل واحترافي مبني بلغة بايثون وواجهات CustomTkinter العصرية. يتيح للمطورين وأصحاب المواقع تحويل مواقع الويب وملفات HTML5/CSS/JS المحلية إلى تطبيقات أندرويد حقيقية بصيغتي (`APK` للتثبيت المباشر و `AAB` للرفع على متجر Google Play)، مع دعم توليد مفاتيح التوقيع الرقمي (Keystore)، ودمج إعلانات AdMob وإشعارات OneSignal وتجميع Gradle تلقائياً دون الحاجة لتثبيت Android Studio المعقد.
+**WebToApp Studio Pro** هو برنامج سطح مكتب متكامل واحترافي مبني بلغة بايثون وواجهة ويب عصرية فائقة الجمال (HTML5/CSS3/JS عبر `pywebview`) مع دعم كامل للواجهة الكلاسيكية (CustomTkinter). يتيح للمطورين وأصحاب المواقع تحويل مواقع الويب وملفات HTML5/CSS/JS المحلية إلى تطبيقات أندرويد حقيقية بصيغتي (`APK` للتثبيت المباشر و `AAB` للرفع على متجر Google Play)، مع دعم كامل للغتين العربية (RTL) والإنجليزية (LTR)، والتبديل بين الوضع المظلم والمضيء، ومحاكي هاتف تفاعلي للمعاينة الحية، وميزة السحب والإفلات، وتوليد مفاتيح التوقيع الرقمي (Keystore)، ودمج إعلانات AdMob وإشعارات OneSignal وتجميع Gradle تلقائياً دون الحاجة لتثبيت Android Studio المعقد.
 
 ---
 
