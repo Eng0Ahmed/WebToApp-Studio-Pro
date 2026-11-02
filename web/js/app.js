@@ -32,12 +32,6 @@ class WebToApp {
       this.updatePreview();
       this.fetchInitialData();
     });
-
-    window.addEventListener('beforeunload', () => {
-      if (navigator.sendBeacon) {
-        navigator.sendBeacon('/api/exit');
-      }
-    });
   }
 
   initEventStream() {

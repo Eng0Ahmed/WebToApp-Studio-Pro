@@ -257,10 +257,6 @@ def stream_logs():
 
 @app.route('/api/exit', method=['POST', 'GET'])
 def exit_app():
-    def shutdown():
-        time.sleep(0.5)
-        os._exit(0)
-    threading.Thread(target=shutdown, daemon=True).start()
     return "ok"
 
 def find_free_port():
@@ -282,18 +278,16 @@ def launch_app():
     edge_bin = next((p for p in edge_paths if os.path.exists(p)), None)
 
     def opener():
-        time.sleep(0.6)
+        time.sleep(0.5)
+        launched = False
         if edge_bin:
-            user_data = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "WebToAppStudioPro", "EdgeProfile")
-            os.makedirs(user_data, exist_ok=True)
-            cmd = [
-                edge_bin,
-                f"--app={url}",
-                "--window-size=1280,860",
-                f"--user-data-dir={user_data}"
-            ]
-            subprocess.Popen(cmd)
-        else:
+            try:
+                cmd = [edge_bin, f"--app={url}", "--window-size=1280,860"]
+                subprocess.Popen(cmd)
+                launched = True
+            except Exception:
+                launched = False
+        if not launched:
             import webbrowser
             webbrowser.open(url)
 
