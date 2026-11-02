@@ -84,7 +84,8 @@ class WebToApp {
           const dirInput = document.getElementById('cfg_local_html_dir');
           dirInput.value = path;
           this.switchContentType('local');
-          this.appendLog(`[إفلات مجلد] تم تعيين مسار المحتوى المحلي: ${path}\n`, 'log-info');
+          this.analyzeLocalPath(path);
+          this.appendLog(`[إفلات مجلد/ملف] تم تعيين مسار المحتوى المحلي: ${path}\n`, 'log-info');
         }
       }
     });
@@ -161,6 +162,9 @@ class WebToApp {
     this.setVal('cfg_version_code', cfg.version_code || 1);
     this.setVal('cfg_web_url', cfg.web_url || 'https://google.com');
     this.setVal('cfg_local_html_dir', cfg.local_html_dir || '');
+    if (cfg.local_html_dir) {
+      this.analyzeLocalPath(cfg.local_html_dir);
+    }
     this.setVal('cfg_orientation', cfg.orientation || 'auto');
     this.switchContentType(cfg.content_type || 'url');
 
@@ -387,11 +391,66 @@ class WebToApp {
   }
 
   async browseLocalDir() {
-    this.appendLog(this.currentLang === 'ar' ? '[تحديد مجلد] جارٍ فتح نافذة اختيار المجلد أمامك...\n' : '[Browse Folder] Opening folder picker window...\n', 'log-info');
+    this.appendLog(this.currentLang === 'ar' ? '[تحديد مجلد] جارٍ فتح نافذة اختيار المجلد أمامك في المقدمة...\n' : '[Browse Folder] Opening folder picker window in foreground...\n', 'log-info');
     const res = await this.apiCall('browse-dir', {});
     if (res && res.path) {
       document.getElementById('cfg_local_html_dir').value = res.path;
+      this.displayPathAnalysis(res.analysis || {});
       this.appendLog(this.currentLang === 'ar' ? `✓ تم اختيار المجلد: ${res.path}\n` : `✓ Selected folder: ${res.path}\n`, 'log-success');
+      this.updatePreview();
+    }
+  }
+
+  async browseHtmlFile() {
+    this.appendLog(this.currentLang === 'ar' ? '[تحديد ملف HTML] جارٍ فتح نافذة اختيار ملف الـ HTML أمامك في المقدمة...\n' : '[Select HTML] Opening file dialog in foreground...\n', 'log-info');
+    const res = await this.apiCall('browse-html-file', {});
+    if (res && res.path) {
+      document.getElementById('cfg_local_html_dir').value = res.path;
+      this.displayPathAnalysis(res.analysis || {});
+      this.appendLog(this.currentLang === 'ar' ? `✓ تم اختيار ملف البداية: ${res.path}\n` : `✓ Selected entry file: ${res.path}\n`, 'log-success');
+      this.updatePreview();
+    }
+  }
+
+  async analyzeLocalPath(path) {
+    if (!path || !path.trim()) {
+      const badge = document.getElementById('localPathStatusBadge');
+      if (badge) badge.style.display = 'none';
+      return;
+    }
+    const res = await this.apiCall('analyze-path', { path: path.trim() });
+    this.displayPathAnalysis(res || {});
+  }
+
+  displayPathAnalysis(info) {
+    const badge = document.getElementById('localPathStatusBadge');
+    if (!badge) return;
+    if (!info || !info.valid) {
+      if (info && info.error) {
+        badge.style.display = 'flex';
+        badge.style.background = 'rgba(239, 68, 68, 0.12)';
+        badge.style.border = '1px solid rgba(239, 68, 68, 0.35)';
+        badge.style.color = '#ef4444';
+        badge.innerHTML = `<span style="font-size: 16px;">⚠️</span> <span>${info.error}</span>`;
+      } else {
+        badge.style.display = 'none';
+      }
+      return;
+    }
+
+    badge.style.display = 'flex';
+    const msg = this.currentLang === 'ar' ? info.message_ar : info.message_en;
+
+    if (info.adapted) {
+      badge.style.background = 'rgba(168, 85, 247, 0.15)';
+      badge.style.border = '1px solid rgba(168, 85, 247, 0.4)';
+      badge.style.color = '#c084fc';
+      badge.innerHTML = `<span style="font-size: 18px;">⚡</span> <div><strong>${this.currentLang === 'ar' ? 'ميزة التكيّف الذكي نشطة:' : 'Smart Adaptation Active:'}</strong> <span style="font-weight: 500;">${msg}</span></div>`;
+    } else {
+      badge.style.background = 'rgba(16, 185, 129, 0.15)';
+      badge.style.border = '1px solid rgba(16, 185, 129, 0.4)';
+      badge.style.color = '#34d399';
+      badge.innerHTML = `<span style="font-size: 18px;">✅</span> <div>${msg}</div>`;
     }
   }
 
@@ -498,7 +557,7 @@ class WebToApp {
     }
 
     if (cfg.content_type === 'local' && !cfg.local_html_dir) {
-      alert(this.currentLang === 'ar' ? 'يرجى تحديد مسار مجلد الـ HTML المحلي!' : 'Please select local HTML directory path!');
+      alert(this.currentLang === 'ar' ? 'يرجى تحديد مسار مجلد أو ملف الـ HTML للمشروع!' : 'Please select a local HTML folder or file path!');
       this.switchTab(0);
       return;
     }

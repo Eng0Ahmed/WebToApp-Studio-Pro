@@ -109,24 +109,253 @@ class ProjectGenerator:
         img = Image.new("RGBA", (512, 512), (0, 0, 0, 0))
         img.save(os.path.join(drawable_dir, "splash_img.png"))
 
+    @staticmethod
+    def analyze_html_source(raw_path):
+        """Analyzes a selected path (directory or file) and returns detection and adaptation details."""
+        if not raw_path:
+            return {"valid": False, "error": "المسار فارغ"}
+        
+        clean_path = str(raw_path).strip().strip('"').strip("'")
+        if not os.path.exists(clean_path):
+            return {"valid": False, "error": "المسار المحدد غير موجود على الجهاز"}
+        
+        if os.path.isfile(clean_path):
+            dir_path = os.path.dirname(clean_path)
+            filename = os.path.basename(clean_path)
+            is_html = filename.lower().endswith(('.html', '.htm'))
+            is_index = filename.lower() == 'index.html'
+            
+            return {
+                "valid": True,
+                "is_file": True,
+                "is_dir": False,
+                "path": clean_path,
+                "dir_path": dir_path,
+                "filename": filename,
+                "entry_file": filename,
+                "is_html": is_html,
+                "adapted": not is_index,
+                "message_ar": f"✓ تم تحديد ملف البداية ({filename}). سيتم تحويله واعتماده تلقائياً كـ index.html مع نسخ كافة ملفات المجلد المحيط." if not is_index else "✓ تم تحديد ملف index.html مباشرة.",
+                "message_en": f"✓ Selected entry file ({filename}). Studio will automatically adapt it as index.html along with sibling files." if not is_index else "✓ Selected index.html directly."
+            }
+
+        elif os.path.isdir(clean_path):
+            try:
+                items = os.listdir(clean_path)
+            except Exception as e:
+                return {"valid": False, "error": f"تعذر قراءة المجلد: {str(e)}"}
+
+            html_files = [f for f in items if os.path.isfile(os.path.join(clean_path, f)) and f.lower().endswith(('.html', '.htm'))]
+
+            if "index.html" in items:
+                return {
+                    "valid": True,
+                    "is_file": False,
+                    "is_dir": True,
+                    "path": clean_path,
+                    "entry_file": "index.html",
+                    "html_count": len(html_files),
+                    "adapted": False,
+                    "message_ar": "✓ مجلد صالح: تم العثور على ملف البداية الرسمي (index.html) داخل المجلد.",
+                    "message_en": "✓ Valid folder: Standard entry file (index.html) found in directory."
+                }
+
+            # Check common entry file variants
+            priority = [
+                'index.htm', 'home.html', 'home.htm', 'main.html', 'main.htm', 
+                'default.html', 'default.htm', 'app.html', 'app.htm', 
+                'start.html', 'start.htm', 'page.html', 'page.htm', 
+                'index1.html', 'الرئيسية.html', 'صفحة.html'
+            ]
+            chosen = None
+            for p in priority:
+                for h in html_files:
+                    if h.lower() == p.lower():
+                        chosen = h
+                        break
+                if chosen:
+                    break
+
+            if not chosen and html_files:
+                chosen = html_files[0]
+
+            if chosen:
+                return {
+                    "valid": True,
+                    "is_file": False,
+                    "is_dir": True,
+                    "path": clean_path,
+                    "entry_file": chosen,
+                    "html_count": len(html_files),
+                    "adapted": True,
+                    "message_ar": f"⚡ تم التعرف على ملف البداية ({chosen}) داخل المجلد! سيقوم البرنامج تلقائياً بتكييفه واعتماده كـ index.html دون الحاجة لتغيير اسمه يدوياً.",
+                    "message_en": f"⚡ Detected entry file ({chosen}) in folder! Studio will automatically adapt it as index.html."
+                }
+            else:
+                return {
+                    "valid": True,
+                    "is_file": False,
+                    "is_dir": True,
+                    "path": clean_path,
+                    "entry_file": None,
+                    "html_count": 0,
+                    "adapted": True,
+                    "message_ar": "ℹ️ تنبيه: لا يوجد ملف HTML في المجلد الرئيسي. سيقوم البرنامج بإنشاء صفحة index.html افتراضية عند التجميع لضمان عمل التطبيق.",
+                    "message_en": "ℹ️ Notice: No HTML file found in folder. Studio will generate a default index.html fallback upon build."
+                }
+
+        return {"valid": False, "error": "المسار غير صالح"}
+
+    def _create_fallback_index_html(self, www_dir):
+        """Generates a modern, elegant default index.html if no HTML file was found."""
+        app_title = self.config.get("app_title", "WebApp")
+        html = f"""<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>{app_title}</title>
+  <style>
+    * {{ box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Cairo", sans-serif; }}
+    body {{
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+    }}
+    .card {{
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      padding: 40px 28px;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }}
+    .icon {{
+      width: 72px;
+      height: 72px;
+      background: linear-gradient(135deg, #6366f1, #3b82f6);
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);
+    }}
+    h1 {{ font-size: 24px; font-weight: 800; margin-bottom: 12px; color: #fff; }}
+    p {{ color: #94a3b8; font-size: 15px; line-height: 1.6; margin-bottom: 24px; }}
+    .badge {{
+      display: inline-block;
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 6px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+    }}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">🚀</div>
+    <h1>مرحباً بك في {app_title}</h1>
+    <p>تم تجميع وتثبيت التطبيق بنجاح عبر استوديو WebToApp Studio Pro.</p>
+    <div class="badge">جاهز للعمل بدون إنترنت</div>
+  </div>
+</body>
+</html>
+"""
+        with open(os.path.join(www_dir, "index.html"), "w", encoding="utf-8") as f:
+            f.write(html)
+
     def _process_content(self):
-        """Copies local HTML files or sets up offline template."""
+        """Copies local HTML files or sets up offline template, with intelligent auto-adaptation."""
         template_offline = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates", "offline.html")
         if os.path.exists(template_offline):
             shutil.copy(template_offline, os.path.join(self.assets_dir, "offline.html"))
             
         if self.config.get("content_type") == "local":
-            local_dir = self.config.get("local_html_dir")
+            raw_path = str(self.config.get("local_html_dir") or "").strip().strip('"').strip("'")
             www_dir = os.path.join(self.assets_dir, "www")
             os.makedirs(www_dir, exist_ok=True)
-            if local_dir and os.path.exists(local_dir):
-                for item in os.listdir(local_dir):
-                    s = os.path.join(local_dir, item)
+            
+            if not raw_path or not os.path.exists(raw_path):
+                self._create_fallback_index_html(www_dir)
+                return
+
+            entry_html_file = None
+            source_dir = None
+
+            if os.path.isfile(raw_path):
+                entry_html_file = raw_path
+                source_dir = os.path.dirname(raw_path)
+            elif os.path.isdir(raw_path):
+                source_dir = raw_path
+
+            # Copy all files & subdirectories from source_dir into www_dir
+            if source_dir and os.path.isdir(source_dir):
+                for item in os.listdir(source_dir):
+                    s = os.path.join(source_dir, item)
                     d = os.path.join(www_dir, item)
-                    if os.path.isdir(s):
-                        shutil.copytree(s, d, dirs_exist_ok=True)
-                    else:
-                        shutil.copy2(s, d)
+                    try:
+                        if os.path.isdir(s):
+                            shutil.copytree(s, d, dirs_exist_ok=True)
+                        else:
+                            shutil.copy2(s, d)
+                    except Exception as e:
+                        print(f"Warning copying {s} to {d}: {e}")
+
+            dest_index = os.path.join(www_dir, "index.html")
+
+            # 1. If user selected a specific HTML file, copy it to index.html
+            if entry_html_file and os.path.isfile(entry_html_file):
+                try:
+                    shutil.copy2(entry_html_file, dest_index)
+                except Exception as e:
+                    print(f"Error copying entry file to index.html: {e}")
+
+            # 2. If index.html still does not exist, search www_dir for candidate files
+            if not os.path.exists(dest_index):
+                candidates = []
+                for fname in os.listdir(www_dir):
+                    fpath = os.path.join(www_dir, fname)
+                    if os.path.isfile(fpath) and fname.lower().endswith(('.html', '.htm')):
+                        candidates.append(fname)
+
+                priority = [
+                    'index.html', 'index.htm', 'home.html', 'home.htm', 
+                    'main.html', 'main.htm', 'default.html', 'default.htm', 
+                    'app.html', 'app.htm', 'start.html', 'start.htm', 
+                    'page.html', 'page.htm', 'index1.html', 'الرئيسية.html', 'صفحة.html'
+                ]
+                chosen = None
+                for p in priority:
+                    for c in candidates:
+                        if c.lower() == p.lower():
+                            chosen = c
+                            break
+                    if chosen:
+                        break
+
+                if not chosen and candidates:
+                    chosen = candidates[0]
+
+                if chosen:
+                    try:
+                        shutil.copy2(os.path.join(www_dir, chosen), dest_index)
+                        print(f"Smart Adapter: Successfully created index.html from '{chosen}'")
+                    except Exception as e:
+                        print(f"Error copying '{chosen}' to 'index.html': {e}")
+                else:
+                    self._create_fallback_index_html(www_dir)
 
     def _create_root_build_gradle(self):
         content = """buildscript {

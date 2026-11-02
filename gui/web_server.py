@@ -6,6 +6,7 @@ import queue
 import socket
 import threading
 import subprocess
+import base64
 import tkinter as tk
 from tkinter import filedialog
 from bottle import Bottle, request, response, static_file
@@ -26,102 +27,123 @@ web_dir = os.path.join(repo_dir, "web")
 output_dest_dir = os.path.expanduser(r"~\Desktop\WebToApp_Builds")
 os.makedirs(output_dest_dir, exist_ok=True)
 
-def native_folder_dialog(title="اختر مجلد المشروع / Select Folder"):
-    """Opens native Windows folder browser dialog in foreground."""
-    ps_script = f'''
-    Add-Type -AssemblyName System.Windows.Forms
-    $f = New-Object System.Windows.Forms.FolderBrowserDialog
-    $f.Description = "{title}"
-    $f.ShowNewFolderButton = $true
-    $top = New-Object System.Windows.Forms.Form
-    $top.TopMost = $true
-    if ($f.ShowDialog($top) -eq [System.Windows.Forms.DialogResult]::OK) {{
-        Write-Output $f.SelectedPath
-    }}
-    '''
+def open_tk_dialog(func, **kwargs):
+    """Fallback Tkinter dialog with topmost flag."""
     try:
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes('-topmost', True)
+        root.lift()
+        root.focus_force()
+        res = func(parent=root, **kwargs)
+        root.destroy()
+        return res or ""
+    except Exception as e:
+        print("Tkinter dialog error:", e)
+        return ""
+
+def _run_ps_dialog(script_body: str) -> str:
+    """Runs a PowerShell dialog with an active topmost owner window forcing foreground appearance."""
+    full_script = f"""
+Add-Type @"
+using System;
+using System.Runtime.InteropServices;
+public class WinForeground {{
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool SetForegroundWindow(IntPtr hWnd);
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool BringWindowToTop(IntPtr hWnd);
+}}
+"@
+[System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") | Out-Null
+$form = New-Object System.Windows.Forms.Form
+$form.TopMost = $true
+$form.StartPosition = "CenterScreen"
+$form.Width = 0
+$form.Height = 0
+$form.ShowInTaskbar = $false
+$form.FormBorderStyle = "None"
+$form.Opacity = 0.01
+$form.Show()
+$form.BringToFront()
+$form.Activate()
+[WinForeground]::BringWindowToTop($form.Handle) | Out-Null
+[WinForeground]::SetForegroundWindow($form.Handle) | Out-Null
+
+{script_body}
+
+$form.Close()
+$form.Dispose()
+"""
+    try:
+        encoded = base64.b64encode(full_script.encode('utf-16le')).decode('ascii')
         proc = subprocess.Popen(
-            ["powershell", "-NoProfile", "-STA", "-Command", ps_script],
+            ["powershell", "-NoProfile", "-STA", "-EncodedCommand", encoded],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            encoding='utf-8',
-            errors='replace',
             creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
         )
-        stdout, _ = proc.communicate(timeout=120)
+        stdout, _ = proc.communicate(timeout=180)
         res = stdout.strip()
         if res:
-            return res
+            try:
+                return base64.b64decode(res).decode('utf-8')
+            except Exception:
+                return res
     except Exception as e:
-        print("Native folder dialog error:", e)
+        print("PS Dialog error:", e)
+    return ""
 
-    # Fallback to Tkinter
+def native_folder_dialog(title="اختر مجلد المشروع / Select Folder"):
+    """Opens native Windows folder browser dialog guaranteed in foreground."""
+    body = f'''
+    $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
+    $dialog.Description = "{title}"
+    $dialog.ShowNewFolderButton = $true
+    if ($dialog.ShowDialog($form) -eq [System.Windows.Forms.DialogResult]::OK) {{
+        $bytes = [System.Text.Encoding]::UTF8.GetBytes($dialog.SelectedPath)
+        Write-Output [System.Convert]::ToBase64String($bytes)
+    }}
+    '''
+    res = _run_ps_dialog(body)
+    if res:
+        return res
     return open_tk_dialog(filedialog.askdirectory, title=title)
 
 def native_file_dialog(title="اختيار ملف / Select File", filter_str="All Files (*.*)|*.*"):
-    """Opens native Windows open file dialog in foreground."""
-    ps_script = f'''
-    Add-Type -AssemblyName System.Windows.Forms
-    $f = New-Object System.Windows.Forms.OpenFileDialog
-    $f.Title = "{title}"
-    $f.Filter = "{filter_str}"
-    $top = New-Object System.Windows.Forms.Form
-    $top.TopMost = $true
-    if ($f.ShowDialog($top) -eq [System.Windows.Forms.DialogResult]::OK) {{
-        Write-Output $f.FileName
+    """Opens native Windows open file dialog guaranteed in foreground."""
+    body = f'''
+    $dialog = New-Object System.Windows.Forms.OpenFileDialog
+    $dialog.Title = "{title}"
+    $dialog.Filter = "{filter_str}"
+    if ($dialog.ShowDialog($form) -eq [System.Windows.Forms.DialogResult]::OK) {{
+        $bytes = [System.Text.Encoding]::UTF8.GetBytes($dialog.FileName)
+        Write-Output [System.Convert]::ToBase64String($bytes)
     }}
     '''
-    try:
-        proc = subprocess.Popen(
-            ["powershell", "-NoProfile", "-STA", "-Command", ps_script],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            encoding='utf-8',
-            errors='replace',
-            creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
-        )
-        stdout, _ = proc.communicate(timeout=120)
-        res = stdout.strip()
-        if res:
-            return res
-    except Exception as e:
-        print("Native file dialog error:", e)
-
+    res = _run_ps_dialog(body)
+    if res:
+        return res
     return open_tk_dialog(filedialog.askopenfilename, title=title)
 
 def native_save_dialog(title="حفظ باسم / Save As", default_name="", filter_str="All Files (*.*)|*.*"):
-    """Opens native Windows save file dialog in foreground."""
-    ps_script = f'''
-    Add-Type -AssemblyName System.Windows.Forms
-    $f = New-Object System.Windows.Forms.SaveFileDialog
-    $f.Title = "{title}"
-    $f.FileName = "{default_name}"
-    $f.Filter = "{filter_str}"
-    $top = New-Object System.Windows.Forms.Form
-    $top.TopMost = $true
-    if ($f.ShowDialog($top) -eq [System.Windows.Forms.DialogResult]::OK) {{
-        Write-Output $f.FileName
+    """Opens native Windows save file dialog guaranteed in foreground."""
+    body = f'''
+    $dialog = New-Object System.Windows.Forms.SaveFileDialog
+    $dialog.Title = "{title}"
+    $dialog.FileName = "{default_name}"
+    $dialog.Filter = "{filter_str}"
+    if ($dialog.ShowDialog($form) -eq [System.Windows.Forms.DialogResult]::OK) {{
+        $bytes = [System.Text.Encoding]::UTF8.GetBytes($dialog.FileName)
+        Write-Output [System.Convert]::ToBase64String($bytes)
     }}
     '''
-    try:
-        proc = subprocess.Popen(
-            ["powershell", "-NoProfile", "-STA", "-Command", ps_script],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            encoding='utf-8',
-            errors='replace',
-            creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
-        )
-        stdout, _ = proc.communicate(timeout=120)
-        res = stdout.strip()
-        if res:
-            return res
-    except Exception as e:
-        print("Native save dialog error:", e)
-
+    res = _run_ps_dialog(body)
+    if res:
+        return res
     return open_tk_dialog(filedialog.asksaveasfilename, title=title, initialfile=default_name)
 
 # --- Static Routes ---
@@ -162,8 +184,50 @@ def browse_file():
 @app.route('/api/browse-dir', method=['GET', 'POST'])
 def browse_dir():
     path = native_folder_dialog(title="اختر مجلد المشروع / Select Project Folder")
+    analysis = ProjectGenerator.analyze_html_source(path) if path else {}
     response.content_type = 'application/json'
-    return json.dumps({"path": path})
+    return json.dumps({"path": path, "analysis": analysis})
+
+@app.route('/api/browse-html-file', method=['GET', 'POST'])
+def browse_html_file():
+    path = native_file_dialog(
+        title="اختر ملف الـ HTML الرئيسي للمشروع / Select Main HTML File",
+        filter_str="HTML Files (*.html;*.htm)|*.html;*.htm|All Web Files (*.html;*.htm;*.js;*.css)|*.html;*.htm;*.js;*.css|All Files (*.*)|*.*"
+    )
+    analysis = ProjectGenerator.analyze_html_source(path) if path else {}
+    response.content_type = 'application/json'
+    return json.dumps({"path": path, "analysis": analysis})
+
+@app.route('/api/analyze-path', method=['GET', 'POST'])
+def analyze_path():
+    data = request.json or {}
+    path = data.get("path", "")
+    analysis = ProjectGenerator.analyze_html_source(path) if path else {}
+    response.content_type = 'application/json'
+    return json.dumps(analysis)
+
+@app.route('/api/preview-local')
+@app.route('/api/preview-local/<filepath:path>')
+def serve_preview_local(filepath=""):
+    """Serves local files for the live interactive smartphone preview."""
+    root_dir = request.query.get('dir', '')
+    if not root_dir or not os.path.exists(root_dir):
+        return "Not found"
+    
+    if os.path.isfile(root_dir):
+        parent_dir = os.path.dirname(root_dir)
+        filename = os.path.basename(root_dir)
+        if not filepath or filepath in ('index.html', ''):
+            return static_file(filename, root=parent_dir)
+        return static_file(filepath, root=parent_dir)
+    elif os.path.isdir(root_dir):
+        if not filepath or filepath in ('index.html', ''):
+            analysis = ProjectGenerator.analyze_html_source(root_dir)
+            entry = analysis.get('entry_file') or 'index.html'
+            if os.path.exists(os.path.join(root_dir, entry)):
+                return static_file(entry, root=root_dir)
+        return static_file(filepath, root=root_dir)
+    return "Not found"
 
 @app.route('/api/browse-save', method=['GET', 'POST'])
 def browse_save():
