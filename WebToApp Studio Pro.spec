@@ -3,16 +3,14 @@ from PyInstaller.utils.hooks import collect_all
 
 datas = [
     ('templates', 'templates'),
-    ('web', 'web')
+    ('web', 'web'),
+    ('agenda_7996558 (1).png', '.')
 ]
 binaries = []
-hiddenimports = ['clr', 'pythonnet', 'webview']
+hiddenimports = ['bottle', 'PIL', 'tkinter', 'queue', 'socket', 'threading', 'subprocess', 'base64']
 
 tmp_ctk = collect_all('customtkinter')
 datas += tmp_ctk[0]; binaries += tmp_ctk[1]; hiddenimports += tmp_ctk[2]
-
-tmp_wv = collect_all('webview')
-datas += tmp_wv[0]; binaries += tmp_wv[1]; hiddenimports += tmp_wv[2]
 
 a = Analysis(
     ['main.py'],
@@ -35,7 +33,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='WebToApp Studio Pro',
+    name='WebToApp-Studio-Pro',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -48,4 +46,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon='app_icon.ico'
 )

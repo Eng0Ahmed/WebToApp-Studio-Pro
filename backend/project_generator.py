@@ -1,4 +1,5 @@
 import os
+import sys
 import shutil
 import re
 from PIL import Image
@@ -276,9 +277,17 @@ class ProjectGenerator:
         with open(os.path.join(www_dir, "index.html"), "w", encoding="utf-8") as f:
             f.write(html)
 
+    @staticmethod
+    def get_templates_dir():
+        if getattr(sys, 'frozen', False):
+            base_dir = getattr(sys, '_MEIPASS', os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        else:
+            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        return os.path.join(base_dir, "templates")
+
     def _process_content(self):
         """Copies local HTML files or sets up offline template, with intelligent auto-adaptation."""
-        template_offline = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates", "offline.html")
+        template_offline = os.path.join(self.get_templates_dir(), "offline.html")
         if os.path.exists(template_offline):
             shutil.copy(template_offline, os.path.join(self.assets_dir, "offline.html"))
             
@@ -388,7 +397,8 @@ task clean(type: Delete) {
             f.write(content)
 
     def _create_gradle_properties(self):
-        content = """org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+        content = """org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8 -Djava.net.preferIPv4Stack=true
+org.gradle.daemon=false
 android.useAndroidX=true
 android.enableJetifier=true
 """
@@ -918,7 +928,7 @@ public class MainActivity extends AppCompatActivity {{
         wrapper_dir = os.path.join(self.output_dir, "gradle", "wrapper")
         os.makedirs(wrapper_dir, exist_ok=True)
 
-        src_jar = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates", "gradle-wrapper.jar")
+        src_jar = os.path.join(self.get_templates_dir(), "gradle-wrapper.jar")
         if os.path.exists(src_jar):
             shutil.copy2(src_jar, os.path.join(wrapper_dir, "gradle-wrapper.jar"))
 

@@ -38,6 +38,7 @@ class AndroidBuilder:
             self._safe_log(log_callback, f"مسار المشروع: {self.project_dir}\n")
 
             env = os.environ.copy()
+            env["_JAVA_OPTIONS"] = "-Djava.net.preferIPv4Stack=true"
             if self.android_sdk:
                 env["ANDROID_HOME"] = self.android_sdk
                 env["ANDROID_SDK_ROOT"] = self.android_sdk
@@ -60,7 +61,7 @@ class AndroidBuilder:
                 return
 
             task = "bundleRelease" if is_aab else "assembleRelease"
-            cmd = [gradle_bin, task, "--stacktrace"]
+            cmd = [gradle_bin, task, "--no-daemon", "--stacktrace"]
 
             self._safe_log(log_callback, f"أداة البناء: {gradle_bin}\n")
             self._safe_log(log_callback, f"الأمر: {task}\n\n")

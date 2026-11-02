@@ -22,7 +22,10 @@ app = Bottle()
 log_queue = queue.Queue()
 is_building = False
 current_step = 1
-repo_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if getattr(sys, 'frozen', False):
+    repo_dir = getattr(sys, '_MEIPASS', os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+else:
+    repo_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 web_dir = os.path.join(repo_dir, "web")
 output_dest_dir = os.path.expanduser(r"~\Desktop\WebToApp_Builds")
 os.makedirs(output_dest_dir, exist_ok=True)

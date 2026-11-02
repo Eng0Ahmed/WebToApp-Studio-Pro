@@ -29,6 +29,8 @@ wheels/
 # User local files & temporary build outputs
 *.apk
 *.aab
+*.exe
+releases/
 *.keystore
 *.jks
 *.wtaproj
