@@ -1,6 +1,6 @@
 /**
  * WebToApp Studio Pro - Application Controller
- * Handles UI interactions, live preview synchronization, i18n, themes, and Python bridge.
+ * Universal Bridge: Supports both pywebview and local REST/SSE server.
  */
 
 class WebToApp {
@@ -14,6 +14,7 @@ class WebToApp {
     this.initClock();
     this.initDragAndDrop();
     this.initEventListeners();
+    this.initEventStream();
   }
 
   initClock() {
@@ -29,17 +30,39 @@ class WebToApp {
     window.addEventListener('DOMContentLoaded', () => {
       this.applyTranslations();
       this.updatePreview();
-      
-      // Wait for pywebview bridge
-      window.addEventListener('pywebviewready', () => {
-        this.fetchInitialData();
-      });
-
-      // Also try direct fetch in case pywebview is already ready
-      setTimeout(() => {
-        this.fetchInitialData();
-      }, 300);
+      this.fetchInitialData();
     });
+
+    window.addEventListener('beforeunload', () => {
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon('/api/exit');
+      }
+    });
+  }
+
+  initEventStream() {
+    if (typeof EventSource !== 'undefined') {
+      try {
+        const sse = new EventSource('/api/stream-logs');
+        sse.onmessage = (e) => {
+          if (!e.data || e.data.trim() === ': keepalive') return;
+          try {
+            const msg = JSON.parse(e.data);
+            if (msg.type === 'log') {
+              this.appendLog(msg.text);
+            } else if (msg.type === 'progress') {
+              this.setStep(msg.step);
+            } else if (msg.type === 'complete') {
+              this.onBuildComplete(msg.success, msg.message, msg.artifact);
+            }
+          } catch (err) {
+            console.warn("SSE parse error:", err);
+          }
+        };
+      } catch (err) {
+        console.warn("SSE not available:", err);
+      }
+    }
   }
 
   initDragAndDrop() {
@@ -59,13 +82,11 @@ class WebToApp {
         const ext = path.split('.').pop().toLowerCase();
 
         if (['png', 'jpg', 'jpeg', 'webp'].includes(ext)) {
-          // If on tab 2 or icon is empty, set as icon
           const iconInput = document.getElementById('cfg_app_icon_path');
           iconInput.value = path;
           this.previewIcon(path);
           this.appendLog(`[إفلات ملف] تم تعيين الأيقونة: ${path}\n`, 'log-info');
         } else if (file.type === '' || !ext || ext === 'html' || ext === 'htm') {
-          // Likely a directory or html file
           const dirInput = document.getElementById('cfg_local_html_dir');
           dirInput.value = path;
           this.switchContentType('local');
@@ -75,19 +96,33 @@ class WebToApp {
     });
   }
 
-  // ==========================================
-  // PYTHON BRIDGE & DATA
-  // ==========================================
+  // Generic API Caller
+  async apiCall(endpoint, body = null) {
+    // If pywebview is active
+    if (window.pywebview && window.pywebview.api && typeof window.pywebview.api[endpoint] === 'function') {
+      return await window.pywebview.api[endpoint](body);
+    }
+
+    // Fallback to fetch REST API
+    try {
+      const url = '/api/' + endpoint.replace(/_/g, '-');
+      const options = {
+        method: body ? 'POST' : 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      };
+      if (body) options.body = JSON.stringify(body);
+      const res = await fetch(url, options);
+      return await res.json();
+    } catch (err) {
+      console.warn(`API call failed for ${endpoint}:`, err);
+      return null;
+    }
+  }
+
   async fetchInitialData() {
-    if (window.pywebview && window.pywebview.api) {
-      try {
-        const data = await window.pywebview.api.get_initial_data();
-        if (data) {
-          this.populateData(data);
-        }
-      } catch (err) {
-        console.warn("Bridge fetch error:", err);
-      }
+    const data = await this.apiCall('initial-data');
+    if (data) {
+      this.populateData(data);
     }
   }
 
@@ -335,62 +370,50 @@ class WebToApp {
   }
 
   // ==========================================
-  // FILE DIALOGS VIA PYTHON
+  // FILE DIALOGS VIA API
   // ==========================================
   async browseIcon() {
-    if (window.pywebview && window.pywebview.api) {
-      const path = await window.pywebview.api.select_file("Image Files (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg");
-      if (path) {
-        document.getElementById('cfg_app_icon_path').value = path;
-        this.previewIcon(path);
-      }
+    const res = await this.apiCall('browse-file', { filter: "Image Files (*.png;*.jpg)" });
+    if (res && res.path) {
+      document.getElementById('cfg_app_icon_path').value = res.path;
+      this.previewIcon(res.path);
     }
   }
 
   async browseSplash() {
-    if (window.pywebview && window.pywebview.api) {
-      const path = await window.pywebview.api.select_file("Image Files (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg");
-      if (path) {
-        document.getElementById('cfg_splash_image_path').value = path;
-      }
+    const res = await this.apiCall('browse-file', { filter: "Image Files (*.png;*.jpg)" });
+    if (res && res.path) {
+      document.getElementById('cfg_splash_image_path').value = res.path;
     }
   }
 
   async browseLocalDir() {
-    if (window.pywebview && window.pywebview.api) {
-      const path = await window.pywebview.api.select_directory();
-      if (path) {
-        document.getElementById('cfg_local_html_dir').value = path;
-      }
+    const res = await this.apiCall('browse-dir');
+    if (res && res.path) {
+      document.getElementById('cfg_local_html_dir').value = res.path;
     }
   }
 
   async browseKeystore() {
-    if (window.pywebview && window.pywebview.api) {
-      const path = await window.pywebview.api.select_file("Keystore Files (*.jks;*.keystore)|*.jks;*.keystore");
-      if (path) {
-        document.getElementById('cfg_keystore_path').value = path;
-      }
+    const res = await this.apiCall('browse-file', { filter: "Keystore Files (*.jks;*.keystore)" });
+    if (res && res.path) {
+      document.getElementById('cfg_keystore_path').value = res.path;
     }
   }
 
   async saveProject() {
-    if (window.pywebview && window.pywebview.api) {
-      const cfg = this.collectConfigFromUI();
-      const res = await window.pywebview.api.save_project_file(cfg);
-      if (res && res.success) {
-        this.appendLog(`[مشروع] تم حفظ المشروع بنجاح: ${res.path}\n`, 'log-success');
-      }
+    const cfg = this.collectConfigFromUI();
+    const res = await this.apiCall('save-project', { config: cfg });
+    if (res && res.success) {
+      this.appendLog(`[مشروع] تم حفظ المشروع بنجاح: ${res.path}\n`, 'log-success');
     }
   }
 
   async loadProject() {
-    if (window.pywebview && window.pywebview.api) {
-      const data = await window.pywebview.api.load_project_file();
-      if (data && data.config) {
-        this.loadConfigIntoUI(data.config);
-        this.appendLog(`[مشروع] تم تحميل المشروع بنجاح: ${data.path}\n`, 'log-success');
-      }
+    const res = await this.apiCall('load-project');
+    if (res && res.success && res.config) {
+      this.loadConfigIntoUI(res.config);
+      this.appendLog(`[مشروع] تم تحميل المشروع بنجاح: ${res.path}\n`, 'log-success');
     }
   }
 
@@ -398,11 +421,9 @@ class WebToApp {
   // KEYSTORE GENERATOR
   // ==========================================
   async chooseKeystoreSavePath() {
-    if (window.pywebview && window.pywebview.api) {
-      const path = await window.pywebview.api.select_save_file("Java Keystore (*.jks)|*.jks", "release_key.jks");
-      if (path) {
-        document.getElementById('gen_output_path').value = path;
-      }
+    const res = await this.apiCall('browse-save', { default_name: "release_key.jks" });
+    if (res && res.path) {
+      document.getElementById('gen_output_path').value = res.path;
     }
   }
 
@@ -435,20 +456,17 @@ class WebToApp {
       validity_years: parseInt(document.getElementById('gen_validity').value) || 25
     };
 
-    if (window.pywebview && window.pywebview.api) {
-      const res = await window.pywebview.api.generate_keystore(params);
-      if (res && res.success) {
-        // Auto-fill into Tab 5 fields
-        document.getElementById('cfg_keystore_path').value = outPath;
-        document.getElementById('cfg_keystore_password').value = pass;
-        document.getElementById('cfg_key_alias').value = alias;
-        document.getElementById('cfg_key_password').value = pass;
-        this.switchKeyType('custom');
-        this.closeModal('modalKey');
-        this.appendLog(`[Keystore] تم إنشاء شهادة التوقيع الرقمي بنجاح: ${outPath}\n`, 'log-success');
-      } else {
-        alert("خطأ: " + (res.error || 'Failed to generate keystore'));
-      }
+    const res = await this.apiCall('generate-keystore', params);
+    if (res && res.success) {
+      document.getElementById('cfg_keystore_path').value = outPath;
+      document.getElementById('cfg_keystore_password').value = pass;
+      document.getElementById('cfg_key_alias').value = alias;
+      document.getElementById('cfg_key_password').value = pass;
+      this.switchKeyType('custom');
+      this.closeModal('modalKey');
+      this.appendLog(`[Keystore] تم إنشاء شهادة التوقيع الرقمي بنجاح: ${outPath}\n`, 'log-success');
+    } else {
+      alert("خطأ: " + ((res && res.error) || 'Failed to generate keystore'));
     }
   }
 
@@ -460,7 +478,6 @@ class WebToApp {
 
     const cfg = this.collectConfigFromUI();
 
-    // Basic Validation
     if (!cfg.app_title.trim()) {
       alert(this.currentLang === 'ar' ? 'يرجى إدخال اسم التطبيق!' : 'Please enter application title!');
       this.switchTab(0);
@@ -490,9 +507,7 @@ class WebToApp {
     this.setStep(1);
     this.clearLog();
 
-    if (window.pywebview && window.pywebview.api) {
-      await window.pywebview.api.start_build(cfg, isAab);
-    }
+    await this.apiCall('start-build', { config: cfg, is_aab: isAab });
   }
 
   updateBuildButtons(building) {
@@ -503,6 +518,7 @@ class WebToApp {
   setStep(stepIndex) {
     for (let i = 1; i <= 5; i++) {
       const el = document.getElementById(`step${i}`);
+      if (!el) continue;
       if (i < stepIndex) {
         el.className = 'step-item done';
       } else if (i === stepIndex) {
@@ -521,7 +537,6 @@ class WebToApp {
     span.textContent = text;
     if (className) span.className = className;
 
-    // Auto coloring for common keywords
     if (!className) {
       if (text.includes('BUILD SUCCESSFUL') || text.includes('تم التجميع بنجاح')) {
         span.className = 'log-success';
@@ -553,9 +568,7 @@ class WebToApp {
   }
 
   async openOutputFolder() {
-    if (window.pywebview && window.pywebview.api) {
-      await window.pywebview.api.open_output_dir();
-    }
+    await this.apiCall('open-output-dir');
   }
 
   // ==========================================
@@ -616,27 +629,23 @@ class WebToApp {
     const el = document.getElementById(id);
     if (el) el.checked = !!val;
   }
+
+  onBuildComplete(success, message, artifactPath) {
+    this.isBuilding = false;
+    this.updateBuildButtons(false);
+    if (success) {
+      this.setStep(5);
+      this.appendLog(`\n🎉 ${message}\n📁 ${artifactPath}\n`, 'log-success');
+    } else {
+      this.appendLog(`\n❌ ${message}\n`, 'log-error');
+    }
+  }
 }
 
 // Global Instance
 const app = new WebToApp();
 
-// Bridge Callbacks from Python
-window.onBuildLog = function(line) {
-  app.appendLog(line);
-};
-
-window.onBuildProgress = function(stepIndex) {
-  app.setStep(stepIndex);
-};
-
-window.onBuildComplete = function(success, message, artifactPath) {
-  app.isBuilding = false;
-  app.updateBuildButtons(false);
-  if (success) {
-    app.setStep(5);
-    app.appendLog(`\n🎉 ${message}\n📁 ${artifactPath}\n`, 'log-success');
-  } else {
-    app.appendLog(`\n❌ ${message}\n`, 'log-error');
-  }
-};
+// Legacy Bridge Callbacks (if pywebview is active)
+window.onBuildLog = function(line) { app.appendLog(line); };
+window.onBuildProgress = function(stepIndex) { app.setStep(stepIndex); };
+window.onBuildComplete = function(success, message, artifactPath) { app.onBuildComplete(success, message, artifactPath); };
