@@ -12,6 +12,10 @@
 
 <br/>
 
+<img src="screenshots/01_basic_settings.png" alt="WebToApp Studio Pro Preview" width="880" style="border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); margin: 16px 0;" />
+
+<br/>
+
 **برنامج سطح مكتب احترافي ومتكامل لتحويل مواقع الويب ومشاريع HTML5 المحلية إلى تطبيقات أندرويد أصلية (APK & AAB)**
 <br/>
 *A modern, powerful Desktop Suite to convert Web URLs or Local HTML5 projects into native Android Applications (APK & AAB) with full Keystore signing, AdMob, and Push Notifications.*
@@ -27,6 +31,29 @@
 
 ### العربية:
 **WebToApp Studio Pro** هو برنامج سطح مكتب متكامل واحترافي مبني بلغة بايثون وواجهات CustomTkinter العصرية. يتيح للمطورين وأصحاب المواقع تحويل مواقع الويب وملفات HTML5/CSS/JS المحلية إلى تطبيقات أندرويد حقيقية بصيغتي (`APK` للتثبيت المباشر و `AAB` للرفع على متجر Google Play)، مع دعم توليد مفاتيح التوقيع الرقمي (Keystore)، ودمج إعلانات AdMob وإشعارات OneSignal وتجميع Gradle تلقائياً دون الحاجة لتثبيت Android Studio المعقد.
+
+---
+
+## 📸 واجهات البرنامج (Screenshots & UI Showcase)
+
+<div align="center">
+
+### 1️⃣ البيانات الأساسية ومصادر المحتوى (Basic Settings)
+![Basic Settings](screenshots/01_basic_settings.png)
+
+### 2️⃣ الهوية والتصميم ومعاينة الأيقونة المباشرة (Branding & Live Preview)
+![Branding & UI](screenshots/02_branding_ui.png)
+
+### 3️⃣ إدارة الصلاحيات ومميزات التصفح (Permissions & Features)
+![Permissions & Features](screenshots/03_permissions_features.png)
+
+### 4️⃣ تحقيق الدخل والإشعارات التفاعلية (Monetization & Push Notifications)
+![Monetization & Push](screenshots/04_monetization_push.png)
+
+### 5️⃣ مولّد مفاتيح التوقيع والتصدير النهائي (Keystore Generator & Build Output)
+![Signing & Export](screenshots/05_signing_export.png)
+
+</div>
 
 ---
 
@@ -85,6 +112,12 @@ WebToApp-Studio-Pro/
 ├── main.py                          # نقطة الانطلاق وتشغيل البرنامج
 ├── WebToApp Studio Pro.spec         # تكوين محرك PyInstaller للبناء
 ├── requirements.txt                 # مكتبات بايثون المطلوبة
+├── screenshots/                     # صور حية لكافة واجهات البرنامج
+│   ├── 01_basic_settings.png
+│   ├── 02_branding_ui.png
+│   ├── 03_permissions_features.png
+│   ├── 04_monetization_push.png
+│   └── 05_signing_export.png
 ├── gui/
 │   ├── app_window.py                # واجهة المستخدم الرئيسية المحدثة بـ CustomTkinter
 │   ├── theme.py                     # نظام التصميم الألوان والخطوط العصرية
