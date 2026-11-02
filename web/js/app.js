@@ -100,11 +100,16 @@ class WebToApp {
     // Fallback to fetch REST API
     try {
       const url = '/api/' + endpoint.replace(/_/g, '-');
+      const isPost = body !== null || endpoint.includes('browse') || endpoint.includes('save') || endpoint.includes('load') || endpoint.includes('generate') || endpoint.includes('start') || endpoint.includes('open');
       const options = {
-        method: body ? 'POST' : 'GET',
+        method: isPost ? 'POST' : 'GET',
         headers: { 'Content-Type': 'application/json' }
       };
-      if (body) options.body = JSON.stringify(body);
+      if (body) {
+        options.body = JSON.stringify(body);
+      } else if (isPost) {
+        options.body = JSON.stringify({});
+      }
       const res = await fetch(url, options);
       return await res.json();
     } catch (err) {
@@ -382,9 +387,11 @@ class WebToApp {
   }
 
   async browseLocalDir() {
-    const res = await this.apiCall('browse-dir');
+    this.appendLog(this.currentLang === 'ar' ? '[تحديد مجلد] جارٍ فتح نافذة اختيار المجلد أمامك...\n' : '[Browse Folder] Opening folder picker window...\n', 'log-info');
+    const res = await this.apiCall('browse-dir', {});
     if (res && res.path) {
       document.getElementById('cfg_local_html_dir').value = res.path;
+      this.appendLog(this.currentLang === 'ar' ? `✓ تم اختيار المجلد: ${res.path}\n` : `✓ Selected folder: ${res.path}\n`, 'log-success');
     }
   }
 

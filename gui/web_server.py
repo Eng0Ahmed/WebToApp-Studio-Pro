@@ -26,22 +26,103 @@ web_dir = os.path.join(repo_dir, "web")
 output_dest_dir = os.path.expanduser(r"~\Desktop\WebToApp_Builds")
 os.makedirs(output_dest_dir, exist_ok=True)
 
-def open_tk_dialog(dialog_func, *args, **kwargs):
-    """Runs a Tkinter dialog in an isolated thread with a hidden root."""
-    result = [""]
-    def _run():
-        root = tk.Tk()
-        root.withdraw()
-        root.attributes("-topmost", True)
-        try:
-            res = dialog_func(*args, **kwargs)
-            result[0] = res or ""
-        finally:
-            root.destroy()
-    t = threading.Thread(target=_run)
-    t.start()
-    t.join()
-    return result[0]
+def native_folder_dialog(title="اختر مجلد المشروع / Select Folder"):
+    """Opens native Windows folder browser dialog in foreground."""
+    ps_script = f'''
+    Add-Type -AssemblyName System.Windows.Forms
+    $f = New-Object System.Windows.Forms.FolderBrowserDialog
+    $f.Description = "{title}"
+    $f.ShowNewFolderButton = $true
+    $top = New-Object System.Windows.Forms.Form
+    $top.TopMost = $true
+    if ($f.ShowDialog($top) -eq [System.Windows.Forms.DialogResult]::OK) {{
+        Write-Output $f.SelectedPath
+    }}
+    '''
+    try:
+        proc = subprocess.Popen(
+            ["powershell", "-NoProfile", "-STA", "-Command", ps_script],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding='utf-8',
+            errors='replace',
+            creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
+        )
+        stdout, _ = proc.communicate(timeout=120)
+        res = stdout.strip()
+        if res:
+            return res
+    except Exception as e:
+        print("Native folder dialog error:", e)
+
+    # Fallback to Tkinter
+    return open_tk_dialog(filedialog.askdirectory, title=title)
+
+def native_file_dialog(title="اختيار ملف / Select File", filter_str="All Files (*.*)|*.*"):
+    """Opens native Windows open file dialog in foreground."""
+    ps_script = f'''
+    Add-Type -AssemblyName System.Windows.Forms
+    $f = New-Object System.Windows.Forms.OpenFileDialog
+    $f.Title = "{title}"
+    $f.Filter = "{filter_str}"
+    $top = New-Object System.Windows.Forms.Form
+    $top.TopMost = $true
+    if ($f.ShowDialog($top) -eq [System.Windows.Forms.DialogResult]::OK) {{
+        Write-Output $f.FileName
+    }}
+    '''
+    try:
+        proc = subprocess.Popen(
+            ["powershell", "-NoProfile", "-STA", "-Command", ps_script],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding='utf-8',
+            errors='replace',
+            creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
+        )
+        stdout, _ = proc.communicate(timeout=120)
+        res = stdout.strip()
+        if res:
+            return res
+    except Exception as e:
+        print("Native file dialog error:", e)
+
+    return open_tk_dialog(filedialog.askopenfilename, title=title)
+
+def native_save_dialog(title="حفظ باسم / Save As", default_name="", filter_str="All Files (*.*)|*.*"):
+    """Opens native Windows save file dialog in foreground."""
+    ps_script = f'''
+    Add-Type -AssemblyName System.Windows.Forms
+    $f = New-Object System.Windows.Forms.SaveFileDialog
+    $f.Title = "{title}"
+    $f.FileName = "{default_name}"
+    $f.Filter = "{filter_str}"
+    $top = New-Object System.Windows.Forms.Form
+    $top.TopMost = $true
+    if ($f.ShowDialog($top) -eq [System.Windows.Forms.DialogResult]::OK) {{
+        Write-Output $f.FileName
+    }}
+    '''
+    try:
+        proc = subprocess.Popen(
+            ["powershell", "-NoProfile", "-STA", "-Command", ps_script],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding='utf-8',
+            errors='replace',
+            creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
+        )
+        stdout, _ = proc.communicate(timeout=120)
+        res = stdout.strip()
+        if res:
+            return res
+    except Exception as e:
+        print("Native save dialog error:", e)
+
+    return open_tk_dialog(filedialog.asksaveasfilename, title=title, initialfile=default_name)
 
 # --- Static Routes ---
 @app.route('/')
@@ -63,56 +144,47 @@ def get_initial_data():
         "output_dir": output_dest_dir
     })
 
-@app.route('/api/browse-file', method='POST')
+@app.route('/api/browse-file', method=['GET', 'POST'])
 def browse_file():
     data = request.json or {}
-    file_filter = data.get("filter", "All Files (*.*)")
-    types = [("All Files", "*.*")]
+    file_filter = data.get("filter", "All Files (*.*)|*.*")
     if "Image" in file_filter:
-        types = [("Image Files", "*.png;*.jpg;*.jpeg;*.webp"), ("All Files", "*.*")]
+        flt = "Image Files (*.png;*.jpg;*.jpeg;*.webp)|*.png;*.jpg;*.jpeg;*.webp|All Files (*.*)|*.*"
     elif "Keystore" in file_filter:
-        types = [("Keystore Files", "*.jks;*.keystore"), ("All Files", "*.*")]
+        flt = "Keystore Files (*.jks;*.keystore)|*.jks;*.keystore|All Files (*.*)|*.*"
+    else:
+        flt = "All Files (*.*)|*.*"
 
-    path = open_tk_dialog(
-        filedialog.askopenfilename,
-        title="اختيار ملف / Select File",
-        filetypes=types
-    )
+    path = native_file_dialog(title="اختيار ملف / Select File", filter_str=flt)
     response.content_type = 'application/json'
     return json.dumps({"path": path})
 
-@app.route('/api/browse-dir', method='POST')
+@app.route('/api/browse-dir', method=['GET', 'POST'])
 def browse_dir():
-    path = open_tk_dialog(
-        filedialog.askdirectory,
-        title="تحديد مجلد / Select Folder"
-    )
+    path = native_folder_dialog(title="اختر مجلد المشروع / Select Project Folder")
     response.content_type = 'application/json'
     return json.dumps({"path": path})
 
-@app.route('/api/browse-save', method='POST')
+@app.route('/api/browse-save', method=['GET', 'POST'])
 def browse_save():
     data = request.json or {}
-    default_name = data.get("default_name", "")
-    types = [("Java Keystore", "*.jks"), ("All Files", "*.*")]
-    path = open_tk_dialog(
-        filedialog.asksaveasfilename,
-        title="حفظ باسم / Save As",
-        initialfile=default_name,
-        filetypes=types
+    default_name = data.get("default_name", "release_key.jks")
+    path = native_save_dialog(
+        title="حفظ ملف المفتاح / Save Keystore As",
+        default_name=default_name,
+        filter_str="Java Keystore (*.jks)|*.jks|All Files (*.*)|*.*"
     )
     response.content_type = 'application/json'
     return json.dumps({"path": path})
 
-@app.route('/api/save-project', method='POST')
+@app.route('/api/save-project', method=['GET', 'POST'])
 def save_project():
     data = request.json or {}
     config_dict = data.get("config", {})
-    filepath = open_tk_dialog(
-        filedialog.asksaveasfilename,
+    filepath = native_save_dialog(
         title="حفظ ملف المشروع",
-        defaultextension=".wtaproj",
-        filetypes=[("WebToApp Project (*.wtaproj)", "*.wtaproj"), ("JSON File (*.json)", "*.json")]
+        default_name="MyProject.wtaproj",
+        filter_str="WebToApp Project (*.wtaproj)|*.wtaproj|JSON Files (*.json)|*.json"
     )
     response.content_type = 'application/json'
     if filepath:
@@ -120,12 +192,11 @@ def save_project():
         return json.dumps({"success": True, "path": filepath})
     return json.dumps({"success": False})
 
-@app.route('/api/load-project', method='POST')
+@app.route('/api/load-project', method=['GET', 'POST'])
 def load_project():
-    filepath = open_tk_dialog(
-        filedialog.askopenfilename,
+    filepath = native_file_dialog(
         title="فتح ملف المشروع",
-        filetypes=[("WebToApp Project (*.wtaproj;*.json)", "*.wtaproj;*.json"), ("All Files", "*.*")]
+        filter_str="WebToApp Project (*.wtaproj;*.json)|*.wtaproj;*.json|All Files (*.*)|*.*"
     )
     response.content_type = 'application/json'
     if filepath and os.path.exists(filepath):
@@ -133,7 +204,7 @@ def load_project():
         return json.dumps({"success": True, "path": filepath, "config": config})
     return json.dumps({"success": False})
 
-@app.route('/api/generate-keystore', method='POST')
+@app.route('/api/generate-keystore', method=['GET', 'POST'])
 def generate_keystore():
     params = request.json or {}
     try:
@@ -156,7 +227,7 @@ def generate_keystore():
         response.content_type = 'application/json'
         return json.dumps({"success": False, "error": str(e)})
 
-@app.route('/api/open-output-dir', method='POST')
+@app.route('/api/open-output-dir', method=['GET', 'POST'])
 def open_output_dir_handler():
     if os.path.exists(output_dest_dir):
         os.startfile(output_dest_dir)
